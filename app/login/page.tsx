@@ -109,7 +109,10 @@ export default function LoginPage() {
                     {/* Sign Up Link */}
                     <div className="text-center text-sm">
                         <span className="text-gray-400">Não tem uma conta? </span>
-                        <button className="text-primary hover:text-primary-light transition-colors font-bold">
+                        <button
+                            onClick={() => router.push("/cadastro")}
+                            className="text-primary hover:text-primary-light transition-colors font-bold"
+                        >
                             Cadastre-se
                         </button>
                     </div>

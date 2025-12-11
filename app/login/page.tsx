@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import Button from "@/components/ui/Button";
@@ -49,10 +50,7 @@ export default function LoginPage() {
                     {/* Google Sign In */}
                     <button
                         type="button"
-                        onClick={() => {
-                            // Aqui você integraria com NextAuth ou Firebase
-                            alert("Integração com Google em breve!");
-                        }}
+                        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
                         className="w-full bg-white hover:bg-gray-100 text-gray-900 font-bold py-3 px-4 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 hover:scale-105"
                     >
                         <svg className="w-5 h-5" viewBox="0 0 24 24">

@@ -1,35 +1,22 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown, DollarSign, PieChart } from "lucide-react";
+import { TrendingUp, Wallet, PieChart, Plus } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import BottomNav from "@/components/BottomNav";
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from "recharts";
-
-const portfolioData = [
-    { month: "Jan", value: 10000 },
-    { month: "Fev", value: 12000 },
-    { month: "Mar", value: 11500 },
-    { month: "Abr", value: 14000 },
-    { month: "Mai", value: 16500 },
-    { month: "Jun", value: 18200 },
-];
-
-const assetDistribution = [
-    { name: "Ações", value: 45, color: "#00D1B2" },
-    { name: "FIIs", value: 25, color: "#00E7C0" },
-    { name: "Cripto", value: 20, color: "#FF4D6D" },
-    { name: "Renda Fixa", value: 10, color: "#6B7280" },
-];
-
-const topAssets = [
-    { name: "PETR4", value: "R$ 5.240,00", change: "+12.5%", positive: true },
-    { name: "VALE3", value: "R$ 4.180,00", change: "+8.3%", positive: true },
-    { name: "MXRF11", value: "R$ 3.920,00", change: "-2.1%", positive: false },
-    { name: "BTC", value: "R$ 2.850,00", change: "+25.7%", positive: true },
-];
+import { useRouter } from "next/navigation";
+import Button from "@/components/ui/Button";
 
 export default function DashboardPage() {
+    const router = useRouter();
+
+    // TODO: Replace with real data from database/API
+    const hasAssets = false;
+    const totalPatrimony = 0;
+    const monthlyGain = 0;
+    const totalAssets = 0;
+    const yearPercentage = 0;
+
     return (
         <div className="min-h-screen bg-background pb-24">
             {/* Header */}
@@ -54,10 +41,12 @@ export default function DashboardPage() {
                     <GlassCard className="bg-gradient-to-br from-primary to-primary-light">
                         <div className="space-y-2">
                             <p className="text-white/80 text-sm font-bold">Patrimônio Total</p>
-                            <h2 className="text-4xl font-bold">R$ 18.200,00</h2>
+                            <h2 className="text-4xl font-bold">
+                                R$ {totalPatrimony.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </h2>
                             <div className="flex items-center gap-2 text-white">
                                 <TrendingUp className="w-4 h-4" />
-                                <span className="text-sm font-bold">+82% este ano</span>
+                                <span className="text-sm font-bold">{yearPercentage}% este ano</span>
                             </div>
                         </div>
                     </GlassCard>
@@ -75,7 +64,9 @@ export default function DashboardPage() {
                             <TrendingUp className="w-5 h-5 text-primary" />
                         </div>
                         <p className="text-gray-400 text-sm">Ganho Mensal</p>
-                        <p className="text-xl font-bold text-primary">+R$ 1.700</p>
+                        <p className="text-xl font-bold text-primary">
+                            R$ {monthlyGain.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        </p>
                     </GlassCard>
 
                     <GlassCard className="space-y-2">
@@ -83,125 +74,81 @@ export default function DashboardPage() {
                             <PieChart className="w-5 h-5 text-accent-red" />
                         </div>
                         <p className="text-gray-400 text-sm">Ativos</p>
-                        <p className="text-xl font-bold">24</p>
+                        <p className="text-xl font-bold">{totalAssets}</p>
                     </GlassCard>
                 </motion.div>
 
-                {/* Portfolio Chart */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                >
-                    <GlassCard>
-                        <h3 className="font-bold mb-4">Evolução do Patrimônio</h3>
-                        <ResponsiveContainer width="100%" height={200}>
-                            <AreaChart data={portfolioData}>
-                                <defs>
-                                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#00D1B2" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#00D1B2" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                                <XAxis dataKey="month" stroke="#6B7280" />
-                                <YAxis stroke="#6B7280" />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: "rgba(26, 31, 46, 0.9)",
-                                        border: "none",
-                                        borderRadius: "12px",
-                                        color: "white",
-                                    }}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="value"
-                                    stroke="#00D1B2"
-                                    strokeWidth={3}
-                                    fill="url(#colorValue)"
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </GlassCard>
-                </motion.div>
-
-                {/* Asset Distribution */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                >
-                    <GlassCard>
-                        <h3 className="font-bold mb-4">Distribuição de Ativos</h3>
-                        <div className="flex items-center justify-between">
-                            <ResponsiveContainer width="50%" height={150}>
-                                <RePieChart>
-                                    <Pie
-                                        data={assetDistribution}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={40}
-                                        outerRadius={60}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {assetDistribution.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                </RePieChart>
-                            </ResponsiveContainer>
-                            <div className="space-y-2">
-                                {assetDistribution.map((asset) => (
-                                    <div key={asset.name} className="flex items-center gap-2">
-                                        <div
-                                            className="w-3 h-3 rounded-full"
-                                            style={{ backgroundColor: asset.color }}
-                                        />
-                                        <span className="text-sm text-gray-400">{asset.name}</span>
-                                        <span className="text-sm font-bold ml-auto">{asset.value}%</span>
-                                    </div>
-                                ))}
+                {/* Empty State or Content */}
+                {!hasAssets ? (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                    >
+                        <GlassCard className="text-center py-12 space-y-6">
+                            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
+                                <Wallet className="w-10 h-10 text-primary" />
                             </div>
-                        </div>
-                    </GlassCard>
-                </motion.div>
-
-                {/* Top Assets */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                >
-                    <GlassCard>
-                        <h3 className="font-bold mb-4">Principais Ativos</h3>
-                        <div className="space-y-3">
-                            {topAssets.map((asset, index) => (
-                                <div
-                                    key={index}
-                                    className="flex items-center justify-between p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors"
-                                >
-                                    <div>
-                                        <p className="font-bold">{asset.name}</p>
-                                        <p className="text-sm text-gray-400">{asset.value}</p>
-                                    </div>
-                                    <div
-                                        className={`flex items-center gap-1 font-bold ${asset.positive ? "text-primary" : "text-accent-red"
-                                            }`}
-                                    >
-                                        {asset.positive ? (
-                                            <TrendingUp className="w-4 h-4" />
-                                        ) : (
-                                            <TrendingDown className="w-4 h-4" />
-                                        )}
-                                        <span>{asset.change}</span>
-                                    </div>
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-bold">Sua carteira está vazia</h3>
+                                <p className="text-gray-400 max-w-md mx-auto">
+                                    Adicione seu primeiro investimento para começar a acompanhar seu patrimônio em tempo real.
+                                </p>
+                            </div>
+                            <Button
+                                onClick={() => router.push("/adicionar-ativo")}
+                                className="mx-auto"
+                            >
+                                <Plus className="w-5 h-5 mr-2" />
+                                Adicionar Primeiro Ativo
+                            </Button>
+                        </GlassCard>
+                    </motion.div>
+                ) : (
+                    <>
+                        {/* Portfolio Chart - Will show when user has assets */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                        >
+                            <GlassCard>
+                                <h3 className="font-bold mb-4">Evolução do Patrimônio</h3>
+                                <div className="h-[200px] flex items-center justify-center text-gray-400">
+                                    Dados serão exibidos após adicionar ativos
                                 </div>
-                            ))}
-                        </div>
-                    </GlassCard>
-                </motion.div>
+                            </GlassCard>
+                        </motion.div>
+
+                        {/* Asset Distribution - Will show when user has assets */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 }}
+                        >
+                            <GlassCard>
+                                <h3 className="font-bold mb-4">Distribuição de Ativos</h3>
+                                <div className="h-[150px] flex items-center justify-center text-gray-400">
+                                    Adicione ativos para ver a distribuição
+                                </div>
+                            </GlassCard>
+                        </motion.div>
+
+                        {/* Top Assets - Will show when user has assets */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                        >
+                            <GlassCard>
+                                <h3 className="font-bold mb-4">Principais Ativos</h3>
+                                <div className="py-8 text-center text-gray-400">
+                                    Nenhum ativo cadastrado
+                                </div>
+                            </GlassCard>
+                        </motion.div>
+                    </>
+                )}
             </div>
 
             <BottomNav />

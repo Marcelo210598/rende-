@@ -2,33 +2,26 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, TrendingUp, Plus } from "lucide-react";
+import { ArrowLeft, TrendingUp, Plus, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import GlassCard from "@/components/ui/GlassCard";
 import Button from "@/components/ui/Button";
 import BottomNav from "@/components/BottomNav";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
 const tabs = ["Ações", "FIIs", "Cripto", "Renda Fixa"];
-
-const stocksData = [
-    { name: "PETR4", qty: 100, avgPrice: "R$ 28,50", current: "R$ 32,10", total: "R$ 3.210", change: "+12.6%" },
-    { name: "VALE3", qty: 80, avgPrice: "R$ 65,20", current: "R$ 70,50", total: "R$ 5.640", change: "+8.1%" },
-    { name: "ITUB4", qty: 150, avgPrice: "R$ 24,80", current: "R$ 26,30", total: "R$ 3.945", change: "+6.0%" },
-];
-
-const performanceData = [
-    { month: "Jan", value: 100 },
-    { month: "Fev", value: 120 },
-    { month: "Mar", value: 115 },
-    { month: "Abr", value: 140 },
-    { month: "Mai", value: 165 },
-    { month: "Jun", value: 182 },
-];
 
 export default function CarteiraPage() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState(0);
+
+    // TODO: Replace with real data from database/API
+    const hasAssets = false;
+    const totalValue = 0;
+    const percentageChange = 0;
+    const absoluteChange = 0;
+    const assetsCount = 0;
+    const totalInvested = 0;
+    const totalReturn = 0;
 
     return (
         <div className="min-h-screen bg-background pb-24">
@@ -62,8 +55,8 @@ export default function CarteiraPage() {
                             key={tab}
                             onClick={() => setActiveTab(index)}
                             className={`px-6 py-3 rounded-2xl font-bold whitespace-nowrap transition-all ${activeTab === index
-                                ? "bg-gradient-to-r from-primary to-primary-light text-white"
-                                : "glass-card text-gray-400 hover:text-white"
+                                    ? "bg-gradient-to-r from-primary to-primary-light text-white"
+                                    : "glass-card text-gray-400 hover:text-white"
                                 }`}
                         >
                             {tab}
@@ -83,97 +76,88 @@ export default function CarteiraPage() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-gray-400 text-sm">Total em {tabs[activeTab]}</p>
-                                    <h2 className="text-3xl font-bold">R$ 12.795,00</h2>
+                                    <h2 className="text-3xl font-bold">
+                                        R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </h2>
                                 </div>
                                 <div className="text-right">
                                     <div className="flex items-center gap-1 text-primary font-bold">
                                         <TrendingUp className="w-4 h-4" />
-                                        <span>+9.2%</span>
+                                        <span>{percentageChange}%</span>
                                     </div>
-                                    <p className="text-sm text-gray-400">+R$ 1.080</p>
+                                    <p className="text-sm text-gray-400">
+                                        R$ {absoluteChange.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    </p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
                                 <div>
                                     <p className="text-xs text-gray-400">Ativos</p>
-                                    <p className="text-lg font-bold">3</p>
+                                    <p className="text-lg font-bold">{assetsCount}</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-400">Investido</p>
-                                    <p className="text-lg font-bold">R$ 11.715</p>
+                                    <p className="text-lg font-bold">
+                                        R$ {totalInvested.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-400">Rendimento</p>
-                                    <p className="text-lg font-bold text-primary">R$ 1.080</p>
+                                    <p className="text-lg font-bold text-primary">
+                                        R$ {totalReturn.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </GlassCard>
                 </motion.div>
 
-                {/* Performance Chart */}
-                <GlassCard>
-                    <h3 className="font-bold mb-4">Desempenho (6 meses)</h3>
-                    <ResponsiveContainer width="100%" height={180}>
-                        <LineChart data={performanceData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                            <XAxis dataKey="month" stroke="#6B7280" />
-                            <YAxis stroke="#6B7280" />
-                            <Tooltip
-                                contentStyle={{
-                                    backgroundColor: "rgba(26, 31, 46, 0.9)",
-                                    border: "none",
-                                    borderRadius: "12px",
-                                    color: "white",
-                                }}
-                            />
-                            <Line
-                                type="monotone"
-                                dataKey="value"
-                                stroke="#00D1B2"
-                                strokeWidth={3}
-                                dot={{ fill: "#00D1B2", r: 4 }}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </GlassCard>
+                {/* Empty State or Content */}
+                {!hasAssets ? (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                    >
+                        <GlassCard className="text-center py-12 space-y-6">
+                            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
+                                <Wallet className="w-10 h-10 text-primary" />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-bold">Nenhum ativo em {tabs[activeTab]}</h3>
+                                <p className="text-gray-400 max-w-md mx-auto">
+                                    Comece adicionando seus investimentos para acompanhar o desempenho da sua carteira.
+                                </p>
+                            </div>
+                            <Button
+                                onClick={() => router.push("/adicionar-ativo")}
+                                className="mx-auto"
+                            >
+                                <Plus className="w-5 h-5 mr-2" />
+                                Adicionar Ativo
+                            </Button>
+                        </GlassCard>
+                    </motion.div>
+                ) : (
+                    <>
+                        {/* Performance Chart - Will show when user has assets */}
+                        <GlassCard>
+                            <h3 className="font-bold mb-4">Desempenho (6 meses)</h3>
+                            <div className="h-[180px] flex items-center justify-center text-gray-400">
+                                Dados serão exibidos após adicionar ativos
+                            </div>
+                        </GlassCard>
 
-                {/* Assets List */}
-                <div className="space-y-3">
-                    <h3 className="font-bold">Ativos em Carteira</h3>
-                    {stocksData.map((stock, index) => (
-                        <motion.div
-                            key={stock.name}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                        >
-                            <GlassCard className="hover:bg-white/10 transition-colors cursor-pointer">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div>
-                                        <h4 className="font-bold text-lg">{stock.name}</h4>
-                                        <p className="text-sm text-gray-400">{stock.qty} cotas</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-lg">{stock.total}</p>
-                                        <p className="text-sm text-primary font-bold">{stock.change}</p>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/10">
-                                    <div>
-                                        <p className="text-xs text-gray-400">Preço Médio</p>
-                                        <p className="text-sm font-bold">{stock.avgPrice}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-400">Preço Atual</p>
-                                        <p className="text-sm font-bold">{stock.current}</p>
-                                    </div>
-                                </div>
+                        {/* Assets List - Will show when user has assets */}
+                        <div className="space-y-3">
+                            <h3 className="font-bold">Ativos em Carteira</h3>
+                            <GlassCard className="text-center py-8 text-gray-400">
+                                Nenhum ativo cadastrado
                             </GlassCard>
-                        </motion.div>
-                    ))}
-                </div>
+                        </div>
+                    </>
+                )}
 
                 {/* Add Asset Button */}
                 <Button

@@ -6,9 +6,11 @@ import GlassCard from "@/components/ui/GlassCard";
 import BottomNav from "@/components/BottomNav";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
+import { useProfile } from "@/contexts/ProfileContext";
 
 export default function DashboardPage() {
     const router = useRouter();
+    const { profile } = useProfile();
 
     // TODO: Replace with real data from database/API
     const hasAssets = false;
@@ -16,6 +18,16 @@ export default function DashboardPage() {
     const monthlyGain = 0;
     const totalAssets = 0;
     const yearPercentage = 0;
+
+    // Get display name for greeting
+    const getDisplayName = () => {
+        if (profile?.nickname) return profile.nickname;
+        if (profile?.name) {
+            const firstName = profile.name.split(" ")[0];
+            return firstName;
+        }
+        return "Investidor";
+    };
 
     return (
         <div className="min-h-screen bg-background pb-24">
@@ -26,7 +38,7 @@ export default function DashboardPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="text-2xl font-bold"
                 >
-                    Olá, Investidor! 👋
+                    Olá, {getDisplayName()}! 👋
                 </motion.h1>
                 <p className="text-gray-400">Acompanhe seu patrimônio em tempo real</p>
             </div>

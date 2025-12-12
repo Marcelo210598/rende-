@@ -7,15 +7,18 @@ import GlassCard from "@/components/ui/GlassCard";
 import BottomNav from "@/components/BottomNav";
 import EditProfileModal from "@/components/EditProfileModal";
 import Toast from "@/components/ui/Toast";
+import LogoutConfirmModal from "@/components/LogoutConfirmModal";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 export default function PerfilPage() {
     const router = useRouter();
-    const { profile, updateProfile } = useProfile();
+    const { profile, updateProfile, clearProfile } = useProfile();
     const [discreteMode, setDiscreteMode] = useState(false);
     const [notifications, setNotifications] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     const handleSaveProfile = (data: any) => {
@@ -28,8 +31,14 @@ export default function PerfilPage() {
     };
 
     const handleLogout = async () => {
-        // TODO: Implement NextAuth signOut
-        router.push("/login");
+        try {
+            clearProfile();
+            localStorage.removeItem('onboardingCompleted');
+            await signOut({ callbackUrl: '/login' });
+        } catch (error) {
+            console.error('Logout error:', error);
+            setToast({ message: "Erro ao sair", type: "error" });
+        }
     };
 
     const menuItems = [
@@ -212,7 +221,7 @@ export default function PerfilPage() {
             <div className="px-6 mt-6">
                 <motion.button
                     whileTap={{ scale: 0.98 }}
-                    onClick={handleLogout}
+                    onClick={() => setIsLogoutModalOpen(true)}
                     className="w-full glass-card p-4 rounded-2xl flex items-center justify-center gap-2 text-accent-red font-bold hover:bg-accent-red/10 transition-colors"
                 >
                     <LogOut className="w-5 h-5" />
@@ -228,6 +237,13 @@ export default function PerfilPage() {
                 onClose={() => setIsEditModalOpen(false)}
                 currentProfile={profile}
                 onSave={handleSaveProfile}
+            />
+
+            {/* Logout Confirmation Modal */}
+            <LogoutConfirmModal
+                isOpen={isLogoutModalOpen}
+                onClose={() => setIsLogoutModalOpen(false)}
+                onConfirm={handleLogout}
             />
 
             {/* Toast Notification */}

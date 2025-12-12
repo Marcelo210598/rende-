@@ -3,18 +3,39 @@
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 
 export default function SplashPage() {
     const router = useRouter();
+    const { data: session, status } = useSession();
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            router.push("/onboarding");
+            // Check if user is authenticated
+            if (status === "loading") return;
+
+            if (session) {
+                // User is logged in, check onboarding status
+                const onboardingCompleted = localStorage.getItem('onboardingCompleted');
+                if (onboardingCompleted === 'true') {
+                    router.push("/dashboard");
+                } else {
+                    router.push("/onboarding");
+                }
+            } else {
+                // User is not logged in, show onboarding
+                const onboardingCompleted = localStorage.getItem('onboardingCompleted');
+                if (onboardingCompleted === 'true') {
+                    router.push("/login");
+                } else {
+                    router.push("/onboarding");
+                }
+            }
         }, 2500);
 
         return () => clearTimeout(timer);
-    }, [router]);
+    }, [router, session, status]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background">

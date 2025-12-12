@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useSession } from "next-auth/react";
 
 export interface UserProfile {
     id?: string;
@@ -25,6 +26,7 @@ const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 const STORAGE_KEY = 'rendeplus_user_profile';
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
+    const { data: session } = useSession();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -36,6 +38,15 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
                 if (stored) {
                     const parsed = JSON.parse(stored);
                     setProfile(parsed);
+                } else if (session?.user) {
+                    // If no stored profile but has session, create from session
+                    const sessionProfile: UserProfile = {
+                        name: session.user.name || '',
+                        email: session.user.email || '',
+                        photo: session.user.image || undefined,
+                        photoSource: 'google'
+                    };
+                    setProfile(sessionProfile);
                 }
             } catch (error) {
                 console.error('Error loading profile:', error);
@@ -45,7 +56,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         };
 
         loadProfile();
-    }, []);
+    }, [session]);
 
     // Save profile to localStorage whenever it changes
     useEffect(() => {

@@ -62,11 +62,15 @@ export default function OnboardingPage() {
         if (selectedIndex < slides.length - 1) {
             scrollTo(selectedIndex + 1);
         } else {
+            // Mark onboarding as completed
+            localStorage.setItem('onboardingCompleted', 'true');
             router.push("/login");
         }
     };
 
     const handleSkip = () => {
+        // Mark onboarding as completed even when skipped
+        localStorage.setItem('onboardingCompleted', 'true');
         router.push("/login");
     };
 
@@ -124,8 +128,8 @@ export default function OnboardingPage() {
                         >
                             <div
                                 className={`w-2 h-2 rounded-full transition-all duration-300 ${index === selectedIndex
-                                        ? "bg-primary w-8"
-                                        : "bg-gray-600"
+                                    ? "bg-primary w-8"
+                                    : "bg-gray-600"
                                     }`}
                             />
                         </button>

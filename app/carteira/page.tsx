@@ -1,176 +1,275 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, TrendingUp, Plus, Wallet } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { TrendingUp, Plus, Edit, Trash2 } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
-import Button from "@/components/ui/Button";
 import BottomNav from "@/components/BottomNav";
+import { useRouter } from "next/navigation";
+import Button from "@/components/ui/Button";
+import DeleteAssetModal from "@/components/DeleteAssetModal";
+import Toast from "@/components/ui/Toast";
 
-const tabs = ["Ações", "FIIs", "Cripto", "Renda Fixa"];
+interface Asset {
+    id: string;
+    ticker: string;
+    name: string;
+    quantity: number;
+    averagePrice: number;
+    type: string;
+    createdAt: string;
+}
+
+const typeLabels: Record<string, string> = {
+    acao: "Ações",
+    fii: "FIIs",
+    cripto: "Criptomoedas",
+    renda_fixa: "Renda Fixa"
+};
 
 export default function CarteiraPage() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState(0);
+    const [activeTab, setActiveTab] = useState("todos");
+    const [assets, setAssets] = useState<Asset[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; asset: Asset | null }>({
+        isOpen: false,
+        asset: null
+    });
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-    // TODO: Replace with real data from database/API
-    const hasAssets = false;
-    const totalValue = 0;
-    const percentageChange = 0;
-    const absoluteChange = 0;
-    const assetsCount = 0;
-    const totalInvested = 0;
-    const totalReturn = 0;
+    // Fetch assets on mount
+    useEffect(() => {
+        fetchAssets();
+    }, []);
+
+    const fetchAssets = async () => {
+        try {
+            setIsLoading(true);
+            const response = await fetch('/api/assets');
+
+            if (!response.ok) {
+                throw new Error('Erro ao carregar ativos');
+            }
+
+            const data = await response.json();
+            setAssets(data);
+        } catch (error) {
+            console.error('Error fetching assets:', error);
+            setToast({ message: "Erro ao carregar ativos", type: "error" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDeleteAsset = async () => {
+        if (!deleteModal.asset) return;
+
+        try {
+            const response = await fetch(`/api/assets/${deleteModal.asset.id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao excluir ativo');
+            }
+
+            setToast({ message: "Ativo excluído com sucesso!", type: "success" });
+            setDeleteModal({ isOpen: false, asset: null });
+            fetchAssets(); // Reload assets
+        } catch (error) {
+            console.error('Error deleting asset:', error);
+            setToast({ message: "Erro ao excluir ativo", type: "error" });
+        }
+    };
+
+    // Filter assets by type
+    const filteredAssets = activeTab === "todos"
+        ? assets
+        : assets.filter(asset => asset.type === activeTab);
+
+    // Calculate totals
+    const totalInvested = filteredAssets.reduce((sum, asset) => sum + (asset.quantity * asset.averagePrice), 0);
+    const assetsCount = filteredAssets.length;
+
+    const tabs = [
+        { id: "todos", label: "Todos" },
+        { id: "acao", label: "Ações" },
+        { id: "fii", label: "FIIs" },
+        { id: "cripto", label: "Cripto" },
+        { id: "renda_fixa", label: "Renda Fixa" },
+    ];
 
     return (
         <div className="min-h-screen bg-background pb-24">
             {/* Header */}
-            <div className="p-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => router.back()}
-                        className="w-10 h-10 rounded-xl glass-card flex items-center justify-center hover:bg-white/10 transition-colors"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <div>
-                        <h1 className="text-2xl font-bold">Minha Carteira</h1>
-                        <p className="text-gray-400 text-sm">Detalhes dos seus investimentos</p>
-                    </div>
-                </div>
-                <button
-                    onClick={() => router.push("/adicionar-ativo")}
-                    className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-primary-light flex items-center justify-center hover:scale-105 transition-transform"
+            <div className="p-6 space-y-2">
+                <motion.h1
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-2xl font-bold"
                 >
-                    <Plus className="w-5 h-5" />
-                </button>
+                    Minha Carteira
+                </motion.h1>
+                <p className="text-gray-400">Gerencie seus investimentos</p>
             </div>
 
-            <div className="px-6 space-y-6">
-                {/* Tabs */}
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                    {tabs.map((tab, index) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(index)}
-                            className={`px-6 py-3 rounded-2xl font-bold whitespace-nowrap transition-all ${activeTab === index
-                                    ? "bg-gradient-to-r from-primary to-primary-light text-white"
-                                    : "glass-card text-gray-400 hover:text-white"
-                                }`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Summary Card */}
+            {/* Summary Card */}
+            <div className="px-6 mb-6">
                 <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
                 >
                     <GlassCard className="bg-gradient-to-br from-primary/20 to-primary-light/20 border border-primary/30">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-gray-400 text-sm">Total em {tabs[activeTab]}</p>
-                                    <h2 className="text-3xl font-bold">
-                                        R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    </h2>
-                                </div>
-                                <div className="text-right">
-                                    <div className="flex items-center gap-1 text-primary font-bold">
-                                        <TrendingUp className="w-4 h-4" />
-                                        <span>{percentageChange}%</span>
-                                    </div>
-                                    <p className="text-sm text-gray-400">
-                                        R$ {absoluteChange.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                                    </p>
-                                </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-sm text-gray-400">Total Investido</p>
+                                <p className="text-2xl font-bold text-primary">
+                                    R$ {totalInvested.toFixed(2)}
+                                </p>
                             </div>
-
-                            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
-                                <div>
-                                    <p className="text-xs text-gray-400">Ativos</p>
-                                    <p className="text-lg font-bold">{assetsCount}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-400">Investido</p>
-                                    <p className="text-lg font-bold">
-                                        R$ {totalInvested.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-400">Rendimento</p>
-                                    <p className="text-lg font-bold text-primary">
-                                        R$ {totalReturn.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                                    </p>
-                                </div>
+                            <div>
+                                <p className="text-sm text-gray-400">Ativos</p>
+                                <p className="text-2xl font-bold">{assetsCount}</p>
                             </div>
                         </div>
                     </GlassCard>
                 </motion.div>
+            </div>
 
-                {/* Empty State or Content */}
-                {!hasAssets ? (
+            {/* Tabs */}
+            <div className="px-6 mb-6">
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`px-4 py-2 rounded-xl font-bold whitespace-nowrap transition-all ${activeTab === tab.id
+                                    ? "bg-primary text-white"
+                                    : "glass-card hover:bg-white/10"
+                                }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Assets List */}
+            <div className="px-6 space-y-3">
+                {isLoading ? (
+                    <GlassCard className="text-center py-12">
+                        <p className="text-gray-400">Carregando ativos...</p>
+                    </GlassCard>
+                ) : filteredAssets.length === 0 ? (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
                     >
-                        <GlassCard className="text-center py-12 space-y-6">
-                            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
-                                <Wallet className="w-10 h-10 text-primary" />
+                        <GlassCard className="text-center py-12 space-y-4">
+                            <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-primary/20 to-primary-light/20 flex items-center justify-center">
+                                <TrendingUp className="w-8 h-8 text-primary" />
                             </div>
-                            <div className="space-y-2">
-                                <h3 className="text-xl font-bold">Nenhum ativo em {tabs[activeTab]}</h3>
-                                <p className="text-gray-400 max-w-md mx-auto">
-                                    Comece adicionando seus investimentos para acompanhar o desempenho da sua carteira.
+                            <div>
+                                <h3 className="font-bold text-lg mb-2">
+                                    {activeTab === "todos" ? "Sua carteira está vazia" : `Nenhum ativo em ${typeLabels[activeTab] || activeTab}`}
+                                </h3>
+                                <p className="text-gray-400 mb-4">
+                                    {activeTab === "todos"
+                                        ? "Adicione seu primeiro investimento para começar a acompanhar seu patrimônio."
+                                        : "Adicione ativos desta categoria para começar."}
                                 </p>
+                                <Button onClick={() => router.push("/adicionar-ativo")}>
+                                    <Plus className="w-5 h-5 mr-2" />
+                                    Adicionar Ativo
+                                </Button>
                             </div>
-                            <Button
-                                onClick={() => router.push("/adicionar-ativo")}
-                                className="mx-auto"
-                            >
-                                <Plus className="w-5 h-5 mr-2" />
-                                Adicionar Ativo
-                            </Button>
                         </GlassCard>
                     </motion.div>
                 ) : (
-                    <>
-                        {/* Performance Chart - Will show when user has assets */}
-                        <GlassCard>
-                            <h3 className="font-bold mb-4">Desempenho (6 meses)</h3>
-                            <div className="h-[180px] flex items-center justify-center text-gray-400">
-                                Dados serão exibidos após adicionar ativos
-                            </div>
-                        </GlassCard>
-
-                        {/* Assets List - Will show when user has assets */}
-                        <div className="space-y-3">
-                            <h3 className="font-bold">Ativos em Carteira</h3>
-                            <GlassCard className="text-center py-8 text-gray-400">
-                                Nenhum ativo cadastrado
+                    filteredAssets.map((asset, index) => (
+                        <motion.div
+                            key={asset.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                        >
+                            <GlassCard className="hover:bg-white/10 transition-colors">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h3 className="font-bold text-lg">{asset.ticker}</h3>
+                                            <span className="text-xs px-2 py-1 rounded-lg bg-primary/20 text-primary">
+                                                {typeLabels[asset.type] || asset.type}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-400 mb-2">{asset.name}</p>
+                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <p className="text-gray-400">Quantidade</p>
+                                                <p className="font-bold">{asset.quantity}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-400">Preço Médio</p>
+                                                <p className="font-bold">R$ {asset.averagePrice.toFixed(2)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-400">Total Investido</p>
+                                                <p className="font-bold text-primary">
+                                                    R$ {(asset.quantity * asset.averagePrice).toFixed(2)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-2 ml-4">
+                                        <button
+                                            onClick={() => setDeleteModal({ isOpen: true, asset })}
+                                            className="w-10 h-10 rounded-xl bg-accent-red/20 hover:bg-accent-red/30 flex items-center justify-center transition-colors"
+                                        >
+                                            <Trash2 className="w-5 h-5 text-accent-red" />
+                                        </button>
+                                    </div>
+                                </div>
                             </GlassCard>
-                        </div>
-                    </>
+                        </motion.div>
+                    ))
                 )}
-
-                {/* Add Asset Button */}
-                <Button
-                    onClick={() => router.push("/adicionar-ativo")}
-                    className="w-full"
-                    variant="glass"
-                >
-                    <Plus className="w-5 h-5 mr-2" />
-                    Adicionar Novo Ativo
-                </Button>
             </div>
 
+            {/* Add Asset Button */}
+            {assets.length > 0 && (
+                <div className="fixed bottom-24 right-6 z-10">
+                    <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => router.push("/adicionar-ativo")}
+                        className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center shadow-lg shadow-primary/50"
+                    >
+                        <Plus className="w-6 h-6 text-white" />
+                    </motion.button>
+                </div>
+            )}
+
             <BottomNav />
+
+            {/* Delete Confirmation Modal */}
+            <DeleteAssetModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, asset: null })}
+                onConfirm={handleDeleteAsset}
+                assetName={deleteModal.asset?.ticker || ""}
+            />
+
+            {/* Toast Notification */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    isVisible={!!toast}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </div>
     );
 }

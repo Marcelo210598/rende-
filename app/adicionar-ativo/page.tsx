@@ -6,12 +6,13 @@ import { ArrowLeft, TrendingUp, Building2, Bitcoin, DollarSign, Plus, Check } fr
 import { useRouter } from "next/navigation";
 import GlassCard from "@/components/ui/GlassCard";
 import Button from "@/components/ui/Button";
+import Toast from "@/components/ui/Toast";
 
 const assetTypes = [
-    { id: "acoes", label: "Ações", icon: TrendingUp, color: "from-primary to-primary-light" },
-    { id: "fiis", label: "FIIs", icon: Building2, color: "from-primary-light to-primary" },
+    { id: "acao", label: "Ações", icon: TrendingUp, color: "from-primary to-primary-light" },
+    { id: "fii", label: "FIIs", icon: Building2, color: "from-primary-light to-primary" },
     { id: "cripto", label: "Cripto", icon: Bitcoin, color: "from-accent-red to-primary" },
-    { id: "renda-fixa", label: "Renda Fixa", icon: DollarSign, color: "from-primary to-accent-red" },
+    { id: "renda_fixa", label: "Renda Fixa", icon: DollarSign, color: "from-primary to-accent-red" },
 ];
 
 export default function AdicionarAtivoPage() {
@@ -19,21 +20,55 @@ export default function AdicionarAtivoPage() {
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         ticker: "",
+        name: "",
         quantity: "",
         avgPrice: "",
-        currentPrice: "",
-        purchaseDate: "",
     });
     const [showSuccess, setShowSuccess] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Simulate success
-        setShowSuccess(true);
-        setTimeout(() => {
-            router.push("/carteira");
-        }, 2000);
+        if (!selectedType) {
+            setToast({ message: "Selecione um tipo de ativo", type: "error" });
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const response = await fetch('/api/assets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ticker: formData.ticker,
+                    name: formData.name || formData.ticker,
+                    quantity: parseFloat(formData.quantity),
+                    averagePrice: parseFloat(formData.avgPrice),
+                    type: selectedType
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao adicionar ativo');
+            }
+
+            setShowSuccess(true);
+            setToast({ message: "Ativo adicionado com sucesso!", type: "success" });
+
+            setTimeout(() => {
+                router.push("/carteira");
+            }, 2000);
+        } catch (error) {
+            console.error('Error adding asset:', error);
+            setToast({ message: "Erro ao adicionar ativo. Tente novamente.", type: "error" });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleInputChange = (field: string, value: string) => {
@@ -119,10 +154,10 @@ export default function AdicionarAtivoPage() {
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     <h3 className="font-bold text-lg mb-4">Detalhes do Ativo</h3>
 
-                                    {/* Ticker/Nome */}
+                                    {/* Ticker */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-gray-300">
-                                            {selectedType === "cripto" ? "Moeda" : "Ticker"}
+                                            {selectedType === "cripto" ? "Moeda" : "Ticker"} *
                                         </label>
                                         <input
                                             type="text"
@@ -134,10 +169,24 @@ export default function AdicionarAtivoPage() {
                                         />
                                     </div>
 
+                                    {/* Nome (opcional) */}
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-300">
+                                            Nome (opcional)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.name}
+                                            onChange={(e) => handleInputChange("name", e.target.value)}
+                                            placeholder="Ex: Petrobras PN"
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                                        />
+                                    </div>
+
                                     {/* Quantidade */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-gray-300">
-                                            Quantidade
+                                            Quantidade *
                                         </label>
                                         <input
                                             type="number"
@@ -153,7 +202,7 @@ export default function AdicionarAtivoPage() {
                                     {/* Preço Médio */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-gray-300">
-                                            Preço Médio (R$)
+                                            Preço Médio (R$) *
                                         </label>
                                         <input
                                             type="number"
@@ -166,38 +215,8 @@ export default function AdicionarAtivoPage() {
                                         />
                                     </div>
 
-                                    {/* Preço Atual */}
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold text-gray-300">
-                                            Preço Atual (R$)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={formData.currentPrice}
-                                            onChange={(e) => handleInputChange("currentPrice", e.target.value)}
-                                            placeholder="32.10"
-                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 focus:outline-none focus:border-primary transition-colors"
-                                            required
-                                        />
-                                    </div>
-
-                                    {/* Data de Compra */}
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold text-gray-300">
-                                            Data de Compra
-                                        </label>
-                                        <input
-                                            type="date"
-                                            value={formData.purchaseDate}
-                                            onChange={(e) => handleInputChange("purchaseDate", e.target.value)}
-                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 focus:outline-none focus:border-primary transition-colors"
-                                            required
-                                        />
-                                    </div>
-
                                     {/* Summary Card */}
-                                    {formData.quantity && formData.avgPrice && formData.currentPrice && (
+                                    {formData.quantity && formData.avgPrice && (
                                         <motion.div
                                             initial={{ opacity: 0, height: 0 }}
                                             animate={{ opacity: 1, height: "auto" }}
@@ -205,36 +224,24 @@ export default function AdicionarAtivoPage() {
                                         >
                                             <p className="text-sm text-gray-400">Resumo</p>
                                             <div className="flex justify-between">
-                                                <span className="text-sm">Investido:</span>
+                                                <span className="text-sm">Total Investido:</span>
                                                 <span className="font-bold">
                                                     R$ {(parseFloat(formData.quantity) * parseFloat(formData.avgPrice)).toFixed(2)}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-sm">Valor Atual:</span>
-                                                <span className="font-bold">
-                                                    R$ {(parseFloat(formData.quantity) * parseFloat(formData.currentPrice)).toFixed(2)}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-sm">Lucro/Prejuízo:</span>
-                                                <span className={`font-bold ${parseFloat(formData.currentPrice) >= parseFloat(formData.avgPrice)
-                                                        ? "text-primary"
-                                                        : "text-accent-red"
-                                                    }`}>
-                                                    R$ {(
-                                                        parseFloat(formData.quantity) *
-                                                        (parseFloat(formData.currentPrice) - parseFloat(formData.avgPrice))
-                                                    ).toFixed(2)}
                                                 </span>
                                             </div>
                                         </motion.div>
                                     )}
 
                                     {/* Submit Button */}
-                                    <Button type="submit" className="w-full mt-6">
-                                        <Plus className="w-5 h-5 mr-2" />
-                                        Adicionar à Carteira
+                                    <Button type="submit" className="w-full mt-6" disabled={isLoading}>
+                                        {isLoading ? (
+                                            "Adicionando..."
+                                        ) : (
+                                            <>
+                                                <Plus className="w-5 h-5 mr-2" />
+                                                Adicionar à Carteira
+                                            </>
+                                        )}
                                     </Button>
                                 </form>
                             </GlassCard>
@@ -271,6 +278,16 @@ export default function AdicionarAtivoPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Toast Notification */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    isVisible={!!toast}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </div>
     );
 }

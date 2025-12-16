@@ -39,24 +39,37 @@ export default function AdicionarAtivoPage() {
         setIsLoading(true);
 
         try {
+            const payload = {
+                ticker: formData.ticker,
+                name: formData.name || formData.ticker,
+                quantity: parseFloat(formData.quantity),
+                averagePrice: parseFloat(formData.avgPrice),
+                type: selectedType
+            };
+
+            console.log('[Frontend] Submitting asset:', payload);
+
             const response = await fetch('/api/assets', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    ticker: formData.ticker,
-                    name: formData.name || formData.ticker,
-                    quantity: parseFloat(formData.quantity),
-                    averagePrice: parseFloat(formData.avgPrice),
-                    type: selectedType
-                }),
+                body: JSON.stringify(payload),
             });
 
+            console.log('[Frontend] Response status:', response.status);
+
+            const data = await response.json();
+            console.log('[Frontend] Response data:', data);
+
             if (!response.ok) {
-                throw new Error('Erro ao adicionar ativo');
+                const errorMessage = data.error || 'Erro ao adicionar ativo';
+                const errorDetails = data.details ? ` (${data.details})` : '';
+                console.error('[Frontend] Error response:', data);
+                throw new Error(errorMessage + errorDetails);
             }
 
+            console.log('[Frontend] Asset created successfully:', data);
             setShowSuccess(true);
             setToast({ message: "Ativo adicionado com sucesso!", type: "success" });
 
@@ -64,8 +77,9 @@ export default function AdicionarAtivoPage() {
                 router.push("/carteira");
             }, 2000);
         } catch (error) {
-            console.error('Error adding asset:', error);
-            setToast({ message: "Erro ao adicionar ativo. Tente novamente.", type: "error" });
+            console.error('[Frontend] Error adding asset:', error);
+            const errorMessage = error instanceof Error ? error.message : "Erro ao adicionar ativo. Tente novamente.";
+            setToast({ message: errorMessage, type: "error" });
         } finally {
             setIsLoading(false);
         }
@@ -113,8 +127,8 @@ export default function AdicionarAtivoPage() {
                                 >
                                     <GlassCard
                                         className={`text-center space-y-3 transition-all ${isSelected
-                                                ? "bg-gradient-to-br " + type.color + " border-2 border-primary"
-                                                : "hover:bg-white/10"
+                                            ? "bg-gradient-to-br " + type.color + " border-2 border-primary"
+                                            : "hover:bg-white/10"
                                             }`}
                                     >
                                         <div

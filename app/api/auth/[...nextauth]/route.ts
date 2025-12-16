@@ -1,5 +1,6 @@
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
+import Credentials from "next-auth/providers/credentials"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     providers: [
@@ -7,6 +8,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         }),
+        // Credentials provider for development/testing
+        Credentials({
+            name: "Credentials",
+            credentials: {
+                email: { label: "Email", type: "email" },
+                password: { label: "Password", type: "password" }
+            },
+            async authorize(credentials) {
+                // ONLY for development - accept test credentials
+                if (process.env.NODE_ENV === 'development') {
+                    if (credentials?.email === "test@test.com" && credentials?.password === "test123") {
+                        return {
+                            id: "dev-user-1",
+                            email: "test@test.com",
+                            name: "Usuário Teste",
+                            image: null
+                        }
+                    }
+                }
+                return null
+            }
+        })
     ],
     secret: process.env.NEXTAUTH_SECRET,
     session: {
@@ -15,7 +38,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     cookies: {
         sessionToken: {
-            name: `__Secure-next-auth.session-token`,
+            name: process.env.NODE_ENV === 'production'
+                ? `__Secure-next-auth.session-token`
+                : `next-auth.session-token`,
             options: {
                 httpOnly: true,
                 sameSite: 'lax',

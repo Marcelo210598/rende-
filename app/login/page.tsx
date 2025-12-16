@@ -14,10 +14,31 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        router.push("/dashboard");
+        setError("");
+        setIsLoading(true);
+
+        try {
+            const result = await signIn("credentials", {
+                email,
+                password,
+                redirect: false,
+            });
+
+            if (result?.error) {
+                setError("Email ou senha inválidos");
+            } else {
+                router.push("/dashboard");
+            }
+        } catch (error) {
+            setError("Erro ao fazer login. Tente novamente.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -84,6 +105,24 @@ export default function LoginPage() {
                         </div>
                     </div>
 
+                    {/* Development Mode Helper */}
+                    {process.env.NODE_ENV === 'development' && (
+                        <div className="bg-primary/10 border border-primary/30 rounded-2xl p-3 text-sm">
+                            <p className="text-primary font-bold mb-1">🔧 Modo Desenvolvimento</p>
+                            <p className="text-gray-300 text-xs">
+                                Email: <span className="font-mono">test@test.com</span><br />
+                                Senha: <span className="font-mono">test123</span>
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Error Message */}
+                    {error && (
+                        <div className="bg-accent-red/10 border border-accent-red/30 rounded-2xl p-3 text-sm text-accent-red">
+                            {error}
+                        </div>
+                    )}
+
                     <form onSubmit={handleLogin} className="space-y-4">
                         {/* Email Input */}
                         <div className="space-y-2">
@@ -139,8 +178,8 @@ export default function LoginPage() {
                         </div>
 
                         {/* Submit Button */}
-                        <Button type="submit" className="w-full">
-                            Entrar
+                        <Button type="submit" className="w-full" disabled={isLoading}>
+                            {isLoading ? "Entrando..." : "Entrar"}
                         </Button>
                     </form>
 

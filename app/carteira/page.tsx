@@ -45,20 +45,63 @@ export default function CarteiraPage() {
 
     const fetchAssets = async () => {
         try {
+            console.log('=== RASTREIO DE LEITURA: CARREGAMENTO DA CARTEIRA ===');
+            console.log('[Carteira] Iniciando busca de ativos...');
+            console.log('[Carteira] Timestamp:', new Date().toISOString());
+            console.log('[Carteira] Ambiente:', process.env.NODE_ENV);
+            console.log('[Carteira] Endpoint:', '/api/assets');
+
             setIsLoading(true);
+
             const response = await fetch('/api/assets');
 
+            console.log('[Carteira] Status Code da resposta:', response.status);
+            console.log('[Carteira] Response OK?', response.ok);
+
             if (!response.ok) {
+                console.error('[Carteira] ❌ ERRO ao carregar ativos');
+                console.error('[Carteira] Status:', response.status);
+                console.error('[Carteira] Status Text:', response.statusText);
                 throw new Error('Erro ao carregar ativos');
             }
 
             const data = await response.json();
+
+            console.log('[Carteira] ✅ DADOS RETORNADOS DA API:');
+            console.log('[Carteira] Tipo de dados:', Array.isArray(data) ? 'Array' : typeof data);
+            console.log('[Carteira] Quantidade de ativos:', Array.isArray(data) ? data.length : 'N/A');
+            console.log('[Carteira] Dados completos:', data);
+
+            if (Array.isArray(data) && data.length > 0) {
+                console.log('[Carteira] Primeiro ativo:', data[0]);
+                console.log('[Carteira] Estrutura do ativo:', {
+                    id: data[0].id,
+                    ticker: data[0].ticker,
+                    name: data[0].name,
+                    quantity: data[0].quantity,
+                    averagePrice: data[0].averagePrice,
+                    type: data[0].type,
+                    createdAt: data[0].createdAt
+                });
+            } else if (Array.isArray(data) && data.length === 0) {
+                console.log('[Carteira] ⚠️ Array vazio retornado - nenhum ativo encontrado');
+            }
+
+            console.log('[Carteira] Atualizando estado com os ativos...');
             setAssets(data);
+            console.log('[Carteira] Estado atualizado com sucesso!');
+
         } catch (error) {
-            console.error('Error fetching assets:', error);
+            console.error('=== ERRO NO CARREGAMENTO DA CARTEIRA ===');
+            console.error('[Carteira] ❌ FALHA ao carregar ativos');
+            console.error('[Carteira] Tipo de erro:', error instanceof Error ? error.name : typeof error);
+            console.error('[Carteira] Mensagem:', error instanceof Error ? error.message : String(error));
+            console.error('[Carteira] Stack trace:', error instanceof Error ? error.stack : 'N/A');
+            console.error('[Carteira] Erro completo:', error);
             setToast({ message: "Erro ao carregar ativos", type: "error" });
         } finally {
             setIsLoading(false);
+            console.log('[Carteira] Carregamento finalizado (loading = false)');
         }
     };
 
@@ -146,8 +189,8 @@ export default function CarteiraPage() {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`px-4 py-2 rounded-xl font-bold whitespace-nowrap transition-all ${activeTab === tab.id
-                                    ? "bg-primary text-white"
-                                    : "glass-card hover:bg-white/10"
+                                ? "bg-primary text-white"
+                                : "glass-card hover:bg-white/10"
                                 }`}
                         >
                             {tab.label}

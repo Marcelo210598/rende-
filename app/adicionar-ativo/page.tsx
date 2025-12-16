@@ -47,7 +47,22 @@ export default function AdicionarAtivoPage() {
                 type: selectedType
             };
 
-            console.log('[Frontend] Submitting asset:', payload);
+            // PASSO 1: Log do objeto ANTES de gravar
+            console.log('=== PASSO 1: ANTES DE GRAVAR ===');
+            console.log('[Frontend] Objeto do ativo a ser salvo:', {
+                ticker: payload.ticker,
+                name: payload.name,
+                quantity: payload.quantity,
+                averagePrice: payload.averagePrice,
+                type: payload.type,
+                totalInvestido: payload.quantity * payload.averagePrice
+            });
+            console.log('[Frontend] Timestamp:', new Date().toISOString());
+            console.log('[Frontend] Ambiente:', process.env.NODE_ENV);
+
+            // PASSO 2: Chamada de API/Salvar
+            console.log('=== PASSO 2: CHAMADA DE API ===');
+            console.log('[Frontend] Enviando requisição POST para /api/assets');
 
             const response = await fetch('/api/assets', {
                 method: 'POST',
@@ -57,27 +72,47 @@ export default function AdicionarAtivoPage() {
                 body: JSON.stringify(payload),
             });
 
-            console.log('[Frontend] Response status:', response.status);
+            console.log('[Frontend] Status Code da resposta:', response.status);
+            console.log('[Frontend] Response OK?', response.ok);
+            console.log('[Frontend] Response headers:', Object.fromEntries(response.headers.entries()));
 
             const data = await response.json();
-            console.log('[Frontend] Response data:', data);
+            console.log('[Frontend] Dados retornados pela API:', data);
 
             if (!response.ok) {
                 const errorMessage = data.error || 'Erro ao adicionar ativo';
                 const errorDetails = data.details ? ` (${data.details})` : '';
-                console.error('[Frontend] Error response:', data);
+                console.error('=== ERRO NA GRAVAÇÃO ===');
+                console.error('[Frontend] Status:', response.status);
+                console.error('[Frontend] Mensagem de erro:', errorMessage);
+                console.error('[Frontend] Detalhes:', errorDetails);
+                console.error('[Frontend] Response completa:', data);
                 throw new Error(errorMessage + errorDetails);
             }
 
-            console.log('[Frontend] Asset created successfully:', data);
+            // PASSO 3: Pós-Gravação (Sucesso)
+            console.log('=== PASSO 3: PÓS-GRAVAÇÃO (SUCESSO) ===');
+            console.log('✅ ATIVO SALVO COM SUCESSO!');
+            console.log('[Frontend] ID do ativo criado:', data.id);
+            console.log('[Frontend] Dados completos do ativo salvo:', data);
+            console.log('[Frontend] Ativo será exibido na carteira após redirecionamento');
+
             setShowSuccess(true);
             setToast({ message: "Ativo adicionado com sucesso!", type: "success" });
 
             setTimeout(() => {
+                console.log('[Frontend] Redirecionando para /carteira...');
                 router.push("/carteira");
             }, 2000);
         } catch (error) {
-            console.error('[Frontend] Error adding asset:', error);
+            // PASSO 3: Pós-Gravação (Erro)
+            console.error('=== PASSO 3: PÓS-GRAVAÇÃO (ERRO) ===');
+            console.error('❌ FALHA AO SALVAR ATIVO!');
+            console.error('[Frontend] Tipo de erro:', error instanceof Error ? error.name : typeof error);
+            console.error('[Frontend] Mensagem de erro:', error instanceof Error ? error.message : String(error));
+            console.error('[Frontend] Stack trace:', error instanceof Error ? error.stack : 'N/A');
+            console.error('[Frontend] Erro completo:', error);
+
             const errorMessage = error instanceof Error ? error.message : "Erro ao adicionar ativo. Tente novamente.";
             setToast({ message: errorMessage, type: "error" });
         } finally {

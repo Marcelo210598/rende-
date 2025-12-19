@@ -1,22 +1,29 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { TrendingUp, Wallet, PieChart, Plus } from "lucide-react";
+import { TrendingUp, Wallet, PieChart, Plus, RefreshCw } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import BottomNav from "@/components/BottomNav";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import CurrencyToggle from "@/components/CurrencyToggle";
+import { usePriceUpdates } from "@/hooks/usePriceUpdates";
 
 export default function DashboardPage() {
     const router = useRouter();
     const { profile } = useProfile();
+    const { formatCurrency } = useCurrency();
 
     // TODO: Replace with real data from database/API
-    const hasAssets = false;
-    const totalPatrimony = 0;
+    const mockAssets: any[] = [];
+    const { assets, isUpdating, lastUpdate, updatePrices } = usePriceUpdates(mockAssets, true);
+
+    const hasAssets = assets.length > 0;
+    const totalPatrimony = assets.reduce((sum, asset) => sum + (asset.totalValue || 0), 0);
     const monthlyGain = 0;
-    const totalAssets = 0;
+    const totalAssets = assets.length;
     const yearPercentage = 0;
 
     // Get display name for greeting
@@ -44,6 +51,15 @@ export default function DashboardPage() {
             </div>
 
             <div className="px-6 space-y-6">
+                {/* Currency Toggle */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 }}
+                >
+                    <CurrencyToggle />
+                </motion.div>
+
                 {/* Total Portfolio Card */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -52,13 +68,30 @@ export default function DashboardPage() {
                 >
                     <GlassCard className="bg-gradient-to-br from-primary to-primary-light">
                         <div className="space-y-2">
-                            <p className="text-white/80 text-sm font-bold">Patrimônio Total</p>
+                            <div className="flex items-center justify-between">
+                                <p className="text-white/80 text-sm font-bold">Patrimônio Total</p>
+                                <button
+                                    onClick={updatePrices}
+                                    disabled={isUpdating}
+                                    className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-50"
+                                    title="Atualizar preços"
+                                >
+                                    <RefreshCw className={`w-4 h-4 text-white ${isUpdating ? 'animate-spin' : ''}`} />
+                                </button>
+                            </div>
                             <h2 className="text-4xl font-bold">
-                                R$ {totalPatrimony.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {formatCurrency(totalPatrimony)}
                             </h2>
-                            <div className="flex items-center gap-2 text-white">
-                                <TrendingUp className="w-4 h-4" />
-                                <span className="text-sm font-bold">{yearPercentage}% este ano</span>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-white">
+                                    <TrendingUp className="w-4 h-4" />
+                                    <span className="text-sm font-bold">{yearPercentage}% este ano</span>
+                                </div>
+                                {lastUpdate && (
+                                    <span className="text-xs text-white/60">
+                                        Atualizado {lastUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </GlassCard>
@@ -77,7 +110,7 @@ export default function DashboardPage() {
                         </div>
                         <p className="text-gray-400 text-sm">Ganho Mensal</p>
                         <p className="text-xl font-bold text-primary">
-                            R$ {monthlyGain.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            {formatCurrency(monthlyGain)}
                         </p>
                     </GlassCard>
 

@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 import { ProfileProvider } from "@/contexts/ProfileContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { Toaster } from "sonner";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -54,7 +56,10 @@ export default function RootLayout({
             <body className={`${inter.variable} antialiased`}>
                 <AuthProvider>
                     <ProfileProvider>
-                        {children}
+                        <CurrencyProvider>
+                            {children}
+                            <Toaster position="top-center" richColors />
+                        </CurrencyProvider>
                     </ProfileProvider>
                 </AuthProvider>
             </body>

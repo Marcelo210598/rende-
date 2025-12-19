@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Plus, Edit, Trash2 } from "lucide-react";
+import { TrendingUp, Plus, Edit, Trash2, RefreshCw } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import BottomNav from "@/components/BottomNav";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import DeleteAssetModal from "@/components/DeleteAssetModal";
 import Toast from "@/components/ui/Toast";
+import { usePriceUpdates } from "@/hooks/usePriceUpdates";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { usePrivateMode } from "@/contexts/PrivateModeContext";
 
 interface Asset {
     id: string;
@@ -18,6 +21,10 @@ interface Asset {
     averagePrice: number;
     type: string;
     createdAt: string;
+    currentPrice?: number;
+    totalValue?: number;
+    profitLoss?: number;
+    profitLossPercent?: number;
 }
 
 const typeLabels: Record<string, string> = {
@@ -29,8 +36,10 @@ const typeLabels: Record<string, string> = {
 
 export default function CarteiraPage() {
     const router = useRouter();
+    const { formatCurrency } = useCurrency();
+    const { isPrivate } = usePrivateMode();
     const [activeTab, setActiveTab] = useState("todos");
-    const [assets, setAssets] = useState<Asset[]>([]);
+    const [dbAssets, setDbAssets] = useState<Asset[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; asset: Asset | null }>({
         isOpen: false,
@@ -88,7 +97,7 @@ export default function CarteiraPage() {
             }
 
             console.log('[Carteira] Atualizando estado com os ativos...');
-            setAssets(data);
+            setDbAssets(data);
             console.log('[Carteira] Estado atualizado com sucesso!');
 
         } catch (error) {
@@ -126,13 +135,17 @@ export default function CarteiraPage() {
         }
     };
 
+    // Integrate price updates
+    const { assets, isUpdating, lastUpdate, updatePrices } = usePriceUpdates(dbAssets, true);
+
     // Filter assets by type
     const filteredAssets = activeTab === "todos"
         ? assets
-        : assets.filter(asset => asset.type === activeTab);
+        : assets.filter((asset: Asset) => asset.type === activeTab);
 
     // Calculate totals
-    const totalInvested = filteredAssets.reduce((sum, asset) => sum + (asset.quantity * asset.averagePrice), 0);
+    const totalInvested = filteredAssets.reduce((sum: number, asset: Asset) => sum + (asset.quantity * asset.averagePrice), 0);
+    const totalCurrentValue = filteredAssets.reduce((sum: number, asset: Asset) => sum + (asset.totalValue || (asset.quantity * asset.averagePrice)), 0);
     const assetsCount = filteredAssets.length;
 
     const tabs = [
@@ -165,17 +178,49 @@ export default function CarteiraPage() {
                     transition={{ delay: 0.1 }}
                 >
                     <GlassCard className="bg-gradient-to-br from-primary/20 to-primary-light/20 border border-primary/30">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <p className="text-sm text-gray-400">Total Investido</p>
-                                <p className="text-2xl font-bold text-primary">
-                                    R$ {totalInvested.toFixed(2)}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-sm font-bold text-gray-400">Resumo da Carteira</h3>
+                                <button
+                                    onClick={updatePrices}
+                                    disabled={isUpdating}
+                                    className="p-2 rounded-lg bg-primary/20 hover:bg-primary/30 transition-colors disabled:opacity-50"
+                                    title="Atualizar preços"
+                                >
+                                    <RefreshCw className={`w-4 h-4 text-primary ${isUpdating ? 'animate-spin' : ''}`} />
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <p className="text-xs text-gray-400">Investido</p>
+                                    <p className="text-lg font-bold text-white">
+                                        {isPrivate ? '••••••' : formatCurrency(totalInvested)}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-400">Atual</p>
+                                    <p className="text-lg font-bold text-primary">
+                                        {isPrivate ? '••••••' : formatCurrency(totalCurrentValue)}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-400">Ativos</p>
+                                    <p className="text-lg font-bold text-white">{assetsCount}</p>
+                                </div>
+                            </div>
+                            {totalCurrentValue !== totalInvested && (
+                                <div className={`flex items-center gap-2 pt-2 border-t border-white/10 ${totalCurrentValue >= totalInvested ? 'text-primary' : 'text-accent-red'}`}>
+                                    <TrendingUp className="w-4 h-4" />
+                                    <span className="text-sm font-bold">
+                                        {isPrivate ? '••••' : `${totalCurrentValue >= totalInvested ? '+' : ''}${formatCurrency(totalCurrentValue - totalInvested)} (${((totalCurrentValue - totalInvested) / totalInvested * 100).toFixed(2)}%)`}
+                                    </span>
+                                </div>
+                            )}
+                            {lastUpdate && (
+                                <p className="text-xs text-gray-500 text-center pt-1">
+                                    Atualizado às {lastUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-400">Ativos</p>
-                                <p className="text-2xl font-bold">{assetsCount}</p>
-                            </div>
+                            )}
                         </div>
                     </GlassCard>
                 </motion.div>
@@ -231,7 +276,7 @@ export default function CarteiraPage() {
                         </GlassCard>
                     </motion.div>
                 ) : (
-                    filteredAssets.map((asset, index) => (
+                    filteredAssets.map((asset: Asset, index: number) => (
                         <motion.div
                             key={asset.id}
                             initial={{ opacity: 0, x: -20 }}
@@ -246,6 +291,11 @@ export default function CarteiraPage() {
                                             <span className="text-xs px-2 py-1 rounded-lg bg-primary/20 text-primary">
                                                 {typeLabels[asset.type] || asset.type}
                                             </span>
+                                            {asset.profitLoss !== undefined && (
+                                                <span className={`text-xs px-2 py-1 rounded-lg ${asset.profitLoss >= 0 ? 'bg-primary/20 text-primary' : 'bg-accent-red/20 text-accent-red'}`}>
+                                                    {asset.profitLoss >= 0 ? '+' : ''}{asset.profitLossPercent?.toFixed(2)}%
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="text-sm text-gray-400 mb-2">{asset.name}</p>
                                         <div className="grid grid-cols-2 gap-4 text-sm">
@@ -255,14 +305,28 @@ export default function CarteiraPage() {
                                             </div>
                                             <div>
                                                 <p className="text-gray-400">Preço Médio</p>
-                                                <p className="font-bold">R$ {asset.averagePrice.toFixed(2)}</p>
+                                                <p className="font-bold">{isPrivate ? '••••' : formatCurrency(asset.averagePrice)}</p>
                                             </div>
                                             <div>
-                                                <p className="text-gray-400">Total Investido</p>
+                                                <p className="text-gray-400">Preço Atual</p>
                                                 <p className="font-bold text-primary">
-                                                    R$ {(asset.quantity * asset.averagePrice).toFixed(2)}
+                                                    {isPrivate ? '••••' : formatCurrency(asset.currentPrice || asset.averagePrice)}
                                                 </p>
                                             </div>
+                                            <div>
+                                                <p className="text-gray-400">Valor Atual</p>
+                                                <p className="font-bold text-primary">
+                                                    {isPrivate ? '••••' : formatCurrency(asset.totalValue || (asset.quantity * asset.averagePrice))}
+                                                </p>
+                                            </div>
+                                            {asset.profitLoss !== undefined && (
+                                                <div className="col-span-2">
+                                                    <p className="text-gray-400">Lucro/Prejuízo</p>
+                                                    <p className={`font-bold ${asset.profitLoss >= 0 ? 'text-primary' : 'text-accent-red'}`}>
+                                                        {isPrivate ? '••••' : `${asset.profitLoss >= 0 ? '+' : ''}${formatCurrency(asset.profitLoss)}`}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-2 ml-4">
@@ -281,7 +345,7 @@ export default function CarteiraPage() {
             </div>
 
             {/* Add Asset Button */}
-            {assets.length > 0 && (
+            {dbAssets.length > 0 && (
                 <div className="fixed bottom-24 right-6 z-10">
                     <motion.button
                         whileHover={{ scale: 1.1 }}

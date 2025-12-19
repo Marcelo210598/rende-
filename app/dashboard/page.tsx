@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, Wallet, PieChart, Plus, RefreshCw } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
@@ -18,11 +19,32 @@ export default function DashboardPage() {
     const router = useRouter();
     const { profile } = useProfile();
     const { formatCurrency } = useCurrency();
-    const { formatValue } = usePrivateMode();
+    const { formatValue, isPrivate } = usePrivateMode();
 
-    // TODO: Replace with real data from database/API
-    const mockAssets: any[] = [];
-    const { assets, isUpdating, lastUpdate, updatePrices } = usePriceUpdates(mockAssets, true);
+    const [dbAssets, setDbAssets] = useState<any[]>([]);
+    const [isLoadingAssets, setIsLoadingAssets] = useState(true);
+
+    // Fetch assets from database
+    useEffect(() => {
+        const fetchAssets = async () => {
+            try {
+                setIsLoadingAssets(true);
+                const response = await fetch('/api/assets');
+                if (response.ok) {
+                    const data = await response.json();
+                    setDbAssets(data);
+                }
+            } catch (error) {
+                console.error('Error fetching assets:', error);
+            } finally {
+                setIsLoadingAssets(false);
+            }
+        };
+
+        fetchAssets();
+    }, []);
+
+    const { assets, isUpdating, lastUpdate, updatePrices } = usePriceUpdates(dbAssets, true);
 
     const hasAssets = assets.length > 0;
     const totalPatrimony = assets.reduce((sum, asset) => sum + (asset.totalValue || 0), 0);
@@ -95,13 +117,15 @@ export default function DashboardPage() {
                                     <RefreshCw className={`w-4 h-4 text-white ${isUpdating ? 'animate-spin' : ''}`} />
                                 </button>
                             </div>
-                            <h2 className="text-4xl font-bold">
-                                {formatCurrency(totalPatrimony)}
+                            <h2 className="text-4xl font-bold text-white">
+                                {isPrivate ? '••••••' : formatCurrency(totalPatrimony)}
                             </h2>
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-white">
+                                <div className={`flex items-center gap-2 ${totalProfitLoss >= 0 ? 'text-white' : 'text-accent-red'}`}>
                                     <TrendingUp className="w-4 h-4" />
-                                    <span className="text-sm font-bold">{yearPercentage}% este ano</span>
+                                    <span className="text-sm font-bold">
+                                        {isPrivate ? '••••' : `${totalProfitLoss >= 0 ? '+' : ''}${totalProfitLossPercent.toFixed(2)}%`}
+                                    </span>
                                 </div>
                                 {lastUpdate && (
                                     <span className="text-xs text-white/60">
@@ -126,7 +150,7 @@ export default function DashboardPage() {
                         </div>
                         <p className="text-gray-400 text-sm">Ganho Mensal</p>
                         <p className="text-xl font-bold text-primary">
-                            {formatCurrency(monthlyGain)}
+                            {isPrivate ? '••••••' : formatCurrency(monthlyGain)}
                         </p>
                     </GlassCard>
 

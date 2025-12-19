@@ -181,38 +181,57 @@ export async function getSelicRate(): Promise<number> {
  */
 export async function updateAllPrices(assets: any[]): Promise<any[]> {
     try {
-        // Group assets by type
-        const cryptoAssets = assets.filter(a => a.type === 'crypto');
-        const stockAssets = assets.filter(a => a.type === 'stock' || a.type === 'fii');
+        // Map Portuguese database types to English for API calls
+        const normalizeType = (type: string): string => {
+            const typeMap: Record<string, string> = {
+                'cripto': 'crypto',
+                'acao': 'stock',
+                'fii': 'fii',
+                'renda_fixa': 'renda_fixa'
+            };
+            return typeMap[type] || type;
+        };
+
+        // Group assets by normalized type
+        const cryptoAssets = assets.filter(a => normalizeType(a.type) === 'crypto');
+        const stockAssets = assets.filter(a => {
+            const normalized = normalizeType(a.type);
+            return normalized === 'stock' || normalized === 'fii';
+        });
 
         // Fetch prices in parallel
         const [cryptoPrices, stockPrices] = await Promise.all([
             cryptoAssets.length > 0
-                ? getCryptoPrices(cryptoAssets.map(a => a.symbol))
+                ? getCryptoPrices(cryptoAssets.map(a => a.ticker || a.symbol))
                 : Promise.resolve({}),
             stockAssets.length > 0
-                ? getB3Prices(stockAssets.map(a => a.symbol))
+                ? getB3Prices(stockAssets.map(a => a.ticker || a.symbol))
                 : Promise.resolve({})
         ]);
 
         // Update asset prices
         return assets.map(asset => {
-            let updatedPrice = asset.currentPrice;
+            const normalizedType = normalizeType(asset.type);
+            const symbol = asset.ticker || asset.symbol;
+            let updatedPrice = asset.currentPrice || asset.averagePrice;
 
-            if (asset.type === 'crypto' && asset.symbol && asset.symbol in cryptoPrices) {
-                updatedPrice = cryptoPrices[asset.symbol as keyof typeof cryptoPrices];
-            } else if ((asset.type === 'stock' || asset.type === 'fii') && asset.symbol && asset.symbol in stockPrices) {
-                updatedPrice = stockPrices[asset.symbol as keyof typeof stockPrices];
+            if (normalizedType === 'crypto' && symbol && symbol in cryptoPrices) {
+                updatedPrice = cryptoPrices[symbol as keyof typeof cryptoPrices];
+            } else if ((normalizedType === 'stock' || normalizedType === 'fii') && symbol && symbol in stockPrices) {
+                updatedPrice = stockPrices[symbol as keyof typeof stockPrices];
             }
 
             // Calculate profit/loss
             const totalValue = updatedPrice * asset.quantity;
             const totalInvested = asset.averagePrice * asset.quantity;
             const profitLoss = totalValue - totalInvested;
-            const profitLossPercent = ((updatedPrice - asset.averagePrice) / asset.averagePrice) * 100;
+            const profitLossPercent = asset.averagePrice > 0
+                ? ((updatedPrice - asset.averagePrice) / asset.averagePrice) * 100
+                : 0;
 
             return {
                 ...asset,
+                symbol: symbol,
                 currentPrice: updatedPrice,
                 totalValue,
                 profitLoss,

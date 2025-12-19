@@ -192,10 +192,10 @@ export async function updateAllPrices(assets: any[]): Promise<any[]> {
         return assets.map(asset => {
             let updatedPrice = asset.currentPrice;
 
-            if (asset.type === 'crypto' && asset.symbol && cryptoPrices[asset.symbol]) {
-                updatedPrice = cryptoPrices[asset.symbol];
-            } else if ((asset.type === 'stock' || asset.type === 'fii') && asset.symbol && stockPrices[asset.symbol]) {
-                updatedPrice = stockPrices[asset.symbol];
+            if (asset.type === 'crypto' && asset.symbol && asset.symbol in cryptoPrices) {
+                updatedPrice = cryptoPrices[asset.symbol as keyof typeof cryptoPrices];
+            } else if ((asset.type === 'stock' || asset.type === 'fii') && asset.symbol && asset.symbol in stockPrices) {
+                updatedPrice = stockPrices[asset.symbol as keyof typeof stockPrices];
             }
 
             // Calculate profit/loss

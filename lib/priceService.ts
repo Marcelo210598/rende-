@@ -48,6 +48,13 @@ export async function getCryptoPrices(symbols: string[]): Promise<Record<string,
             'XRP': 'ripple',
             'ADA': 'cardano',
             'DOGE': 'dogecoin',
+            'AAVE': 'aave',
+            'MATIC': 'matic-network',
+            'LINK': 'chainlink',
+            'UNI': 'uniswap',
+            'AVAX': 'avalanche-2',
+            'DOT': 'polkadot',
+            'ATOM': 'cosmos',
         };
 
         const ids = symbols

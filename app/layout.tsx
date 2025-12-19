@@ -4,6 +4,7 @@ import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { PrivateModeProvider } from "@/contexts/PrivateModeContext";
 import { Toaster } from "sonner";
 
 const inter = Inter({
@@ -57,8 +58,10 @@ export default function RootLayout({
                 <AuthProvider>
                     <ProfileProvider>
                         <CurrencyProvider>
-                            {children}
-                            <Toaster position="top-center" richColors />
+                            <PrivateModeProvider>
+                                {children}
+                                <Toaster position="top-center" richColors />
+                            </PrivateModeProvider>
                         </CurrencyProvider>
                     </ProfileProvider>
                 </AuthProvider>

@@ -8,13 +8,17 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { usePrivateMode } from "@/contexts/PrivateModeContext";
 import CurrencyToggle from "@/components/CurrencyToggle";
+import PrivateModeToggle from "@/components/PrivateModeToggle";
+import ProfitLossChart from "@/components/charts/ProfitLossChart";
 import { usePriceUpdates } from "@/hooks/usePriceUpdates";
 
 export default function DashboardPage() {
     const router = useRouter();
     const { profile } = useProfile();
     const { formatCurrency } = useCurrency();
+    const { formatValue } = usePrivateMode();
 
     // TODO: Replace with real data from database/API
     const mockAssets: any[] = [];
@@ -22,9 +26,12 @@ export default function DashboardPage() {
 
     const hasAssets = assets.length > 0;
     const totalPatrimony = assets.reduce((sum, asset) => sum + (asset.totalValue || 0), 0);
+    const totalInvested = assets.reduce((sum, asset) => sum + (asset.averagePrice * asset.quantity || 0), 0);
+    const totalProfitLoss = totalPatrimony - totalInvested;
+    const totalProfitLossPercent = totalInvested > 0 ? (totalProfitLoss / totalInvested) * 100 : 0;
     const monthlyGain = 0;
     const totalAssets = assets.length;
-    const yearPercentage = 0;
+    const yearPercentage = totalProfitLossPercent;
 
     // Get display name for greeting
     const getDisplayName = () => {
@@ -58,6 +65,15 @@ export default function DashboardPage() {
                     transition={{ delay: 0.05 }}
                 >
                     <CurrencyToggle />
+                </motion.div>
+
+                {/* Private Mode Toggle */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.06 }}
+                >
+                    <PrivateModeToggle />
                 </motion.div>
 
                 {/* Total Portfolio Card */}
@@ -151,11 +167,30 @@ export default function DashboardPage() {
                     </motion.div>
                 ) : (
                     <>
-                        {/* Portfolio Chart - Will show when user has assets */}
+                        {/* Profit/Loss Chart */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 }}
+                        >
+                            <ProfitLossChart
+                                assets={assets.map(asset => ({
+                                    name: asset.symbol || asset.name,
+                                    profitLoss: asset.profitLoss || 0,
+                                    profitLossPercent: asset.profitLossPercent || 0,
+                                    currentValue: asset.totalValue || 0,
+                                    invested: (asset.averagePrice * asset.quantity) || 0,
+                                }))}
+                                totalProfitLoss={totalProfitLoss}
+                                totalProfitLossPercent={totalProfitLossPercent}
+                            />
+                        </motion.div>
+
+                        {/* Portfolio Chart - Will show when user has assets */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 }}
                         >
                             <GlassCard>
                                 <h3 className="font-bold mb-4">Evolução do Patrimônio</h3>

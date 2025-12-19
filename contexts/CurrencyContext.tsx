@@ -21,10 +21,12 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 export function CurrencyProvider({ children }: { children: ReactNode }) {
     const [currency, setCurrencyState] = useState<Currency>('BRL');
     const [exchangeRate, setExchangeRate] = useState<number>(5.0);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
-    // Load currency preference from localStorage
+    // Load currency preference from localStorage only once
     useEffect(() => {
+        setMounted(true);
         const savedCurrency = localStorage.getItem('preferred_currency') as Currency;
         if (savedCurrency === 'BRL' || savedCurrency === 'USD') {
             setCurrencyState(savedCurrency);
@@ -33,6 +35,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
     // Fetch exchange rate on mount and periodically
     useEffect(() => {
+        if (!mounted) return;
+
         const fetchRate = async () => {
             setIsLoading(true);
             try {
@@ -51,7 +55,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         const interval = setInterval(fetchRate, 5 * 60 * 1000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [mounted]);
 
     const toggleCurrency = () => {
         const newCurrency = currency === 'BRL' ? 'USD' : 'BRL';

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { updateAllPrices } from '@/lib/priceService';
 import { toast } from 'sonner';
 
@@ -8,6 +8,7 @@ export function usePriceUpdates(assets: any[], enabled: boolean = true) {
     const [updatedAssets, setUpdatedAssets] = useState(assets);
     const [isUpdating, setIsUpdating] = useState(false);
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+    const hasUpdated = useRef(false);
 
     const updatePrices = async () => {
         if (!enabled || assets.length === 0) return;
@@ -25,21 +26,17 @@ export function usePriceUpdates(assets: any[], enabled: boolean = true) {
         }
     };
 
-    // Auto-update on mount
+    // Auto-update on mount only once
     useEffect(() => {
-        if (enabled && assets.length > 0) {
+        if (enabled && assets.length > 0 && !hasUpdated.current) {
+            hasUpdated.current = true;
             updatePrices();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [enabled]);
-
-    // Update when assets change
-    useEffect(() => {
-        setUpdatedAssets(assets);
-    }, [assets]);
+    }, []);
 
     return {
-        assets: updatedAssets,
+        assets: updatedAssets.length > 0 ? updatedAssets : assets,
         isUpdating,
         lastUpdate,
         updatePrices,

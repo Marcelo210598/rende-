@@ -12,6 +12,10 @@ const defaultCategories = [
     { id: 'default-compras', name: 'Compras', emoji: '🛍️', isDefault: true },
     { id: 'default-contas', name: 'Contas', emoji: '💡', isDefault: true },
     { id: 'default-dividas', name: 'Dívidas', emoji: '💳', isDefault: true },
+    { id: 'default-cartao', name: 'Cartão de Crédito', emoji: '💳', isDefault: true },
+    { id: 'default-balada', name: 'Balada', emoji: '🎉', isDefault: true },
+    { id: 'default-churrasco', name: 'Churrasco', emoji: '🥩', isDefault: true },
+    { id: 'default-igreja', name: 'Igreja/Dízimo', emoji: '⛪', isDefault: true },
     { id: 'default-outros', name: 'Outros', emoji: '❓', isDefault: true },
 ]
 

@@ -1,33 +1,108 @@
 import NextAuth from "next-auth"
-import Google from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
+import { prisma } from "@/lib/prisma"
+import { devCodes } from "@/lib/devStorage"
+
+// Forçar modo dev até configurar Resend e fazer db push
+const isDevelopmentMode = process.env.NODE_ENV === 'development' && !process.env.USE_DATABASE;
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     providers: [
-        Google({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        }),
-        // Credentials provider for development/testing
         Credentials({
-            name: "Credentials",
+            id: "email-otp",
+            name: "Email",
             credentials: {
                 email: { label: "Email", type: "email" },
-                password: { label: "Password", type: "password" }
+                code: { label: "Code", type: "text" }
             },
             async authorize(credentials) {
-                // ONLY for development - accept test credentials
-                if (process.env.NODE_ENV === 'development') {
-                    if (credentials?.email === "test@test.com" && credentials?.password === "test123") {
-                        return {
-                            id: "dev-user-1",
-                            email: "test@test.com",
-                            name: "Usuário Teste",
-                            image: null
-                        }
-                    }
+                if (!credentials?.email || !credentials?.code) {
+                    return null;
                 }
-                return null
+
+                const normalizedEmail = (credentials.email as string).toLowerCase().trim();
+                const normalizedCode = (credentials.code as string).trim();
+
+                if (isDevelopmentMode) {
+                    // Modo desenvolvimento sem banco
+                    console.log(`🔍 DEV MODE: Tentando validar código para ${normalizedEmail}`);
+                    console.log(`🔍 Código recebido: ${normalizedCode}`);
+
+                    const storedData = devCodes.get(normalizedEmail);
+                    console.log(`🔍 Dados armazenados:`, storedData);
+
+                    if (!storedData) {
+                        console.log('❌ Nenhum código encontrado para este email');
+                        return null;
+                    }
+
+                    if (new Date() > storedData.expiresAt) {
+                        console.log('❌ Código expirado');
+                        devCodes.delete(normalizedEmail);
+                        return null;
+                    }
+
+                    if (storedData.code !== normalizedCode) {
+                        console.log(`❌ Código incorreto. Esperado: ${storedData.code}, Recebido: ${normalizedCode}`);
+                        return null;
+                    }
+
+                    devCodes.delete(normalizedEmail);
+                    console.log('✅ Código validado com sucesso!');
+
+                    return {
+                        id: `dev-${normalizedEmail}`,
+                        email: normalizedEmail,
+                        name: null,
+                        image: null
+                    };
+                }
+
+                // Modo produção com banco
+                const verificationCode = await prisma.verificationCode.findFirst({
+                    where: {
+                        email: normalizedEmail,
+                        code: normalizedCode,
+                    }
+                });
+
+                if (!verificationCode || new Date() > verificationCode.expiresAt) {
+                    if (verificationCode) {
+                        await prisma.verificationCode.delete({
+                            where: { id: verificationCode.id }
+                        });
+                    }
+                    return null;
+                }
+
+                let user = await prisma.user.findUnique({
+                    where: { email: normalizedEmail }
+                });
+
+                if (!user) {
+                    user = await prisma.user.create({
+                        data: {
+                            email: normalizedEmail,
+                            emailVerified: new Date(),
+                        }
+                    });
+                } else if (!user.emailVerified) {
+                    user = await prisma.user.update({
+                        where: { id: user.id },
+                        data: { emailVerified: new Date() }
+                    });
+                }
+
+                await prisma.verificationCode.delete({
+                    where: { id: verificationCode.id }
+                });
+
+                return {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    image: user.image
+                };
             }
         })
     ],

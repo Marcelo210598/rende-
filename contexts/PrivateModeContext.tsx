@@ -1,56 +1,70 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useSession } from "next-auth/react";
 
 interface PrivateModeContextType {
-    isPrivate: boolean;
+    isPrivateMode: boolean;
     togglePrivateMode: () => void;
-    formatValue: (value: number, isCurrency?: boolean) => string;
+    setPrivateMode: (value: boolean) => void;
 }
 
 const PrivateModeContext = createContext<PrivateModeContextType | undefined>(undefined);
 
 export function PrivateModeProvider({ children }: { children: ReactNode }) {
-    const [isPrivate, setIsPrivate] = useState(false);
-    const [mounted, setMounted] = useState(false);
+    const { data: session } = useSession();
+    const [isPrivateMode, setIsPrivateMode] = useState(false);
 
-    // Load private mode preference from localStorage
+    // Sync with server when session changes
     useEffect(() => {
-        setMounted(true);
-        const savedMode = localStorage.getItem('private_mode');
-        if (savedMode === 'true') {
-            setIsPrivate(true);
-        }
-    }, []);
+        const fetchPrivateMode = async () => {
+            if (session?.user) {
+                try {
+                    const response = await fetch('/api/user');
+                    if (response.ok) {
+                        const user = await response.json();
+                        setIsPrivateMode(user.discreteMode || false);
+                    }
+                } catch (error) {
+                    console.error('Error fetching private mode:', error);
+                }
+            }
+        };
+        fetchPrivateMode();
+    }, [session]);
 
-    const togglePrivateMode = () => {
-        const newMode = !isPrivate;
-        setIsPrivate(newMode);
-        localStorage.setItem('private_mode', String(newMode));
+    const togglePrivateMode = async () => {
+        const newValue = !isPrivateMode;
+        setIsPrivateMode(newValue);
+
+        // Update in database
+        try {
+            await fetch('/api/user', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ discreteMode: newValue }),
+            });
+        } catch (error) {
+            console.error('Error updating private mode:', error);
+            setIsPrivateMode(!newValue); // Revert on error
+        }
     };
 
-    const formatValue = (value: number, isCurrency: boolean = true): string => {
-        if (!mounted) return '...';
-        if (isPrivate) return '••••••';
-
-        if (isCurrency) {
-            return new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-            }).format(value);
+    const setPrivateMode = async (value: boolean) => {
+        setIsPrivateMode(value);
+        try {
+            await fetch('/api/user', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ discreteMode: value }),
+            });
+        } catch (error) {
+            console.error('Error updating private mode:', error);
         }
-
-        return value.toFixed(2);
     };
 
     return (
-        <PrivateModeContext.Provider
-            value={{
-                isPrivate,
-                togglePrivateMode,
-                formatValue,
-            }}
-        >
+        <PrivateModeContext.Provider value={{ isPrivateMode, togglePrivateMode, setPrivateMode }}>
             {children}
         </PrivateModeContext.Provider>
     );
@@ -59,7 +73,7 @@ export function PrivateModeProvider({ children }: { children: ReactNode }) {
 export function usePrivateMode() {
     const context = useContext(PrivateModeContext);
     if (context === undefined) {
-        throw new Error('usePrivateMode must be used within a PrivateModeProvider');
+        throw new Error("usePrivateMode must be used within a PrivateModeProvider");
     }
     return context;
 }

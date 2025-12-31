@@ -1,55 +1,45 @@
 "use client";
 
-import { Home, Wallet, BookOpen, User } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
+import { Home, Receipt, CreditCard, Target, User } from "lucide-react";
 
 const navItems = [
-    { icon: Home, label: "Home", href: "/dashboard" },
-    { icon: Wallet, label: "Carteira", href: "/carteira" },
-    { icon: BookOpen, label: "Conhecimento", href: "/conhecimento" },
-    { icon: User, label: "Perfil", href: "/perfil" },
+    { href: "/dashboard", icon: Home, label: "Home" },
+    { href: "/gastos", icon: Receipt, label: "Gastos" },
+    { href: "/dividas", icon: CreditCard, label: "Dívidas" },
+    { href: "/orcamento", icon: Target, label: "Orçamento" },
+    { href: "/perfil", icon: User, label: "Perfil" },
 ];
 
 export default function BottomNav() {
     const pathname = usePathname();
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 glass-card rounded-t-3xl border-t border-white/10 z-50">
-            <div className="flex justify-around items-center h-20 max-w-md mx-auto px-4">
+        <nav className="bottom-nav">
+            <div className="flex justify-around items-center px-2 pt-2">
                 {navItems.map((item) => {
+                    const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                     const Icon = item.icon;
-                    const isActive = pathname === item.href;
 
                     return (
                         <Link
                             key={item.href}
                             href={item.href}
-                            className="flex flex-col items-center justify-center gap-1 relative"
+                            className={`bottom-nav-item relative ${isActive ? "active" : "inactive"}`}
                         >
-                            <motion.div
-                                whileTap={{ scale: 0.9 }}
-                                className="relative"
-                            >
+                            <div className="relative">
+                                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
                                 {isActive && (
                                     <motion.div
-                                        layoutId="activeTab"
-                                        className="absolute -inset-3 bg-gradient-to-r from-primary to-primary-light rounded-2xl opacity-20"
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                        layoutId="nav-indicator"
+                                        className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-accent-green"
+                                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
                                     />
                                 )}
-                                <Icon
-                                    className={`w-6 h-6 transition-colors relative z-10 ${isActive
-                                            ? "text-primary"
-                                            : "text-gray-400"
-                                        }`}
-                                />
-                            </motion.div>
-                            <span
-                                className={`text-xs font-bold transition-colors ${isActive ? "text-primary" : "text-gray-400"
-                                    }`}
-                            >
+                            </div>
+                            <span className={`text-xs mt-1 ${isActive ? "font-medium" : ""}`}>
                                 {item.label}
                             </span>
                         </Link>

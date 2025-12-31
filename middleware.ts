@@ -5,19 +5,17 @@ import type { NextRequest } from "next/server"
 // Define protected routes
 const protectedRoutes = [
     '/dashboard',
-    '/carteira',
-    '/adicionar-ativo',
-    '/perfil',
-    '/conhecimento'
+    '/gastos',
+    '/adicionar-gasto',
+    '/dividas',
+    '/orcamento',
+    '/perfil'
 ]
 
 // Define public routes
 const publicRoutes = [
     '/',
-    '/login',
-    '/cadastro',
-    '/onboarding',
-    '/splash'
+    '/login'
 ]
 
 export default async function middleware(request: NextRequest) {
@@ -36,8 +34,8 @@ export default async function middleware(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // If logged in and trying to access login page, redirect to dashboard
-    if (session && pathname === '/login') {
+    // If logged in and trying to access login page or root, redirect to dashboard
+    if (session && (pathname === '/login' || pathname === '/')) {
         const url = new URL('/dashboard', request.url)
         return NextResponse.redirect(url)
     }

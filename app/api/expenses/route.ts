@@ -42,13 +42,10 @@ export async function GET(request: Request) {
             };
         }
 
+        // Filter by month/year using new fields
         if (month && year) {
-            const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-            const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
-            where.date = {
-                gte: startDate,
-                lte: endDate,
-            };
+            where.month = parseInt(month);
+            where.year = parseInt(year);
         }
 
         const expenses = await prisma.expense.findMany({
@@ -85,11 +82,17 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { categoryId, amount, note, date, installmentId } = body;
+        const { categoryId, amount, note, date, month, year, installmentId } = body;
 
         if (!categoryId || !amount) {
             return NextResponse.json({ error: "Category and amount are required" }, { status: 400 });
         }
+
+        const expenseDate = date ? new Date(date) : new Date();
+
+        // Calculate month/year from date if not provided
+        const expenseMonth = month ?? (expenseDate.getMonth() + 1);
+        const expenseYear = year ?? expenseDate.getFullYear();
 
         const expense = await prisma.expense.create({
             data: {
@@ -97,7 +100,9 @@ export async function POST(request: Request) {
                 categoryId,
                 amount: parseFloat(amount),
                 note: note || null,
-                date: date ? new Date(date) : new Date(),
+                date: expenseDate,
+                month: expenseMonth,
+                year: expenseYear,
                 installmentId: installmentId || null,
             },
             include: {

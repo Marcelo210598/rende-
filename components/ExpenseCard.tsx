@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Trash2, Edit } from "lucide-react";
+import { Trash2, Edit, Check } from "lucide-react";
 
 interface ExpenseCardProps {
     expense: {
@@ -9,6 +9,8 @@ interface ExpenseCardProps {
         amount: number;
         note?: string | null;
         date: string;
+        isPaid?: boolean;
+        paidAt?: string | null;
         category: {
             name: string;
             emoji: string;
@@ -17,13 +19,15 @@ interface ExpenseCardProps {
     isDiscreteMode?: boolean;
     onEdit?: () => void;
     onDelete?: () => void;
+    onTogglePaid?: (id: string, isPaid: boolean) => void;
 }
 
 export default function ExpenseCard({
     expense,
     isDiscreteMode,
     onEdit,
-    onDelete
+    onDelete,
+    onTogglePaid
 }: ExpenseCardProps) {
     const formatCurrency = (value: number) => {
         if (isDiscreteMode) return "R$ ••••";
@@ -51,14 +55,38 @@ export default function ExpenseCard({
         });
     };
 
+    const isPaid = expense.isPaid || false;
+
+    const handleTogglePaid = () => {
+        if (onTogglePaid) {
+            onTogglePaid(expense.id, !isPaid);
+        }
+    };
+
     return (
         <motion.div
             layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            className="glass-card p-4 flex items-center gap-4"
+            className={`glass-card p-4 flex items-center gap-4 transition-opacity ${
+                isPaid ? 'opacity-60' : ''
+            }`}
         >
+            {/* Checkbox de pago */}
+            {onTogglePaid && (
+                <button
+                    onClick={handleTogglePaid}
+                    className="flex-shrink-0 w-6 h-6 rounded-lg border-2 border-white/20 flex items-center justify-center transition-all hover:border-accent-green"
+                    style={{
+                        backgroundColor: isPaid ? '#10b981' : 'transparent',
+                        borderColor: isPaid ? '#10b981' : 'rgba(255, 255, 255, 0.2)'
+                    }}
+                >
+                    {isPaid && <Check size={16} className="text-white" />}
+                </button>
+            )}
+
             {/* Category emoji */}
             <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-2xl">
                 {expense.category.emoji}
@@ -66,17 +94,32 @@ export default function ExpenseCard({
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">
+                <p className={`font-medium truncate ${
+                    isPaid ? 'line-through text-white/50' : ''
+                }`}>
                     {expense.note || expense.category.name}
                 </p>
                 <p className="text-sm text-white/50">
                     {expense.category.name} • {formatDate(expense.date)}
                 </p>
+                {isPaid && expense.paidAt && (
+                    <p className="text-xs text-accent-green mt-1">
+                        ✓ Pago em {new Date(expense.paidAt).toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: '2-digit'
+                        })}
+                    </p>
+                )}
             </div>
 
             {/* Amount */}
             <div className="text-right">
-                <p className={`font-semibold text-accent-red ${isDiscreteMode ? "discrete-blur" : ""}`}>
+                <p className={`font-semibold text-accent-red ${
+                    isDiscreteMode ? 'discrete-blur' : ''
+                } ${
+                    isPaid ? 'line-through' : ''
+                }`}>
                     -{formatCurrency(expense.amount)}
                 </p>
             </div>

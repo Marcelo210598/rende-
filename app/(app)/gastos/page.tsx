@@ -21,6 +21,8 @@ interface Expense {
     amount: number;
     note: string | null;
     date: string;
+    isPaid?: boolean;
+    paidAt?: string | null;
     category: Category;
 }
 
@@ -70,6 +72,41 @@ export default function GastosPage() {
         } catch (error) {
             console.error(error);
             toast.error("Erro ao excluir gasto");
+        }
+    };
+
+    const handleTogglePaid = async (expenseId: string, isPaid: boolean) => {
+        try {
+            // Optimistic update
+            setExpenses((prev) =>
+                prev.map((e) =>
+                    e.id === expenseId
+                        ? { ...e, isPaid, paidAt: isPaid ? new Date().toISOString() : null }
+                        : e
+                )
+            );
+
+            const response = await fetch(`/api/expenses/${expenseId}/toggle-paid`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isPaid }),
+            });
+
+            if (!response.ok) throw new Error("Erro ao atualizar");
+
+            const { expense } = await response.json();
+            
+            // Update with server response
+            setExpenses((prev) =>
+                prev.map((e) => (e.id === expenseId ? expense : e))
+            );
+
+            toast.success(isPaid ? "Gasto marcado como pago!" : "Gasto desmarcado");
+        } catch (error) {
+            console.error(error);
+            toast.error("Erro ao atualizar status");
+            // Revert optimistic update
+            await fetchData();
         }
     };
 
@@ -228,6 +265,7 @@ export default function GastosPage() {
                                             expense={expense}
                                             isDiscreteMode={isPrivateMode}
                                             onDelete={() => setDeleteExpense(expense)}
+                                            onTogglePaid={handleTogglePaid}
                                         />
                                     ))}
                                 </AnimatePresence>

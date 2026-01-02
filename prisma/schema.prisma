@@ -52,6 +52,8 @@ model Expense {
   date        DateTime  @default(now())
   month       Int       @default(1) // 1-12 (Janeiro=1, Dezembro=12)
   year        Int       @default(2024) // 2024, 2025, etc
+  isPaid      Boolean   @default(false) // Se a despesa já foi paga
+  paidAt      DateTime? // Quando foi paga
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   
@@ -63,6 +65,7 @@ model Expense {
   @@index([categoryId])
   @@index([date])
   @@index([userId, month, year])
+  @@index([userId, isPaid])
 }
 
 model Debt {

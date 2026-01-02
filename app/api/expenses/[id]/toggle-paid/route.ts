@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
+import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 
 export async function PATCH(
@@ -7,7 +7,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await auth();
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });

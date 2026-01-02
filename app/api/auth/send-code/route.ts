@@ -56,8 +56,18 @@ export async function POST(request: NextRequest) {
         const emailResult = await sendVerificationCode(normalizedEmail, code);
 
         if (!emailResult.success) {
+            console.error('❌ Falha ao enviar email:', {
+                email: normalizedEmail,
+                error: emailResult.error,
+                hasApiKey: !!process.env.RESEND_API_KEY,
+                apiKeyPreview: process.env.RESEND_API_KEY?.substring(0, 8) + '...'
+            });
+            
             return NextResponse.json(
-                { error: 'Erro ao enviar email. Tente novamente.' },
+                { 
+                    error: 'Erro ao enviar email. Tente novamente.',
+                    debug: process.env.NODE_ENV === 'development' ? emailResult.error : undefined
+                },
                 { status: 500 }
             );
         }

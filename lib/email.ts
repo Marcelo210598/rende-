@@ -21,20 +21,28 @@ export async function sendVerificationCode(email: string, code: string) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Rende+ <onboarding@resend.dev>', // Use seu domínio verificado em produção
+      from: 'Rende+ <onboarding@resend.dev>',
       to: [email],
       subject: 'Seu código de verificação - Rende+',
       html: getEmailTemplate(code),
     });
 
     if (error) {
-      console.error('Erro ao enviar email:', error);
+      console.error('❌ Resend API Error:', {
+        name: error.name,
+        message: error.message,
+        statusCode: (error as any).statusCode,
+      });
       return { success: false, error };
     }
 
+    console.log('✅ Email enviado com sucesso para:', email);
     return { success: true, data };
-  } catch (error) {
-    console.error('Erro ao enviar email:', error);
+  } catch (error: any) {
+    console.error('❌ Exception ao enviar email:', {
+      message: error.message,
+      stack: error.stack,
+    });
     return { success: false, error };
   }
 }

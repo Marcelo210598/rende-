@@ -20,6 +20,8 @@ export async function sendVerificationCode(email: string, code: string) {
   }
 
   try {
+    console.log('📤 Enviando email via Resend para:', email);
+    
     const { data, error } = await resend.emails.send({
       from: 'Rende+ <onboarding@resend.dev>',
       to: [email],
@@ -32,16 +34,37 @@ export async function sendVerificationCode(email: string, code: string) {
         name: error.name,
         message: error.message,
         statusCode: (error as any).statusCode,
+        email: email,
       });
-      return { success: false, error };
+      
+      // Retry uma vez se falhar
+      console.log('🔄 Tentando reenviar...');
+      const retryResult = await resend.emails.send({
+        from: 'Rende+ <onboarding@resend.dev>',
+        to: [email],
+        subject: 'Seu código de verificação - Rende+',
+        html: getEmailTemplate(code),
+      });
+      
+      if (retryResult.error) {
+        console.error('❌ Retry também falhou:', retryResult.error);
+        return { success: false, error: retryResult.error };
+      }
+      
+      console.log('✅ Email enviado com sucesso na retry!');
+      return { success: true, data: retryResult.data };
     }
 
-    console.log('✅ Email enviado com sucesso para:', email);
+    console.log('✅ Email enviado com sucesso!', {
+      id: data?.id,
+      to: email
+    });
     return { success: true, data };
   } catch (error: any) {
     console.error('❌ Exception ao enviar email:', {
       message: error.message,
       stack: error.stack,
+      email: email,
     });
     return { success: false, error };
   }

@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Enviar email
+        console.log('📧 Tentando enviar email para:', normalizedEmail);
         const emailResult = await sendVerificationCode(normalizedEmail, code);
 
         if (!emailResult.success) {
@@ -65,12 +66,18 @@ export async function POST(request: NextRequest) {
             
             return NextResponse.json(
                 { 
-                    error: 'Erro ao enviar email. Tente novamente.',
+                    error: 'Erro ao enviar email. Verifique se o endereço está correto e tente novamente.',
+                    code: 'EMAIL_SEND_FAILED',
                     debug: process.env.NODE_ENV === 'development' ? emailResult.error : undefined
                 },
                 { status: 500 }
             );
         }
+
+        console.log('✅ Email enviado com sucesso!', {
+            email: normalizedEmail,
+            devMode: emailResult.devMode
+        });
 
         return NextResponse.json({
             success: true,

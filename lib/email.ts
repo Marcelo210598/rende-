@@ -23,9 +23,9 @@ export async function sendVerificationCode(email: string, code: string) {
     console.log('📤 Enviando email via Resend para:', email);
     
     const { data, error } = await resend.emails.send({
-      from: 'Rende+ <onboarding@resend.dev>',
+      from: 'Rende+ <noreply@rendeplus.com>',
       to: [email],
-      subject: 'Seu código de verificação - Rende+',
+      subject: 'Seu código de acesso - Rende+',
       html: getEmailTemplate(code),
     });
 
@@ -40,9 +40,9 @@ export async function sendVerificationCode(email: string, code: string) {
       // Retry uma vez se falhar
       console.log('🔄 Tentando reenviar...');
       const retryResult = await resend.emails.send({
-        from: 'Rende+ <onboarding@resend.dev>',
+        from: 'Rende+ <noreply@rendeplus.com>',
         to: [email],
-        subject: 'Seu código de verificação - Rende+',
+        subject: 'Seu código de acesso - Rende+',
         html: getEmailTemplate(code),
       });
       

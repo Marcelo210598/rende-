@@ -36,6 +36,18 @@ export async function GET(request: Request) {
       },
     });
 
+    // Get expenses for the month
+    const expenses = await prisma.expense.findMany({
+      where: {
+        userId: user.id,
+        month,
+        year,
+      },
+      include: {
+        category: true,
+      },
+    });
+
     // Calculate total income (incomes + fixed monthly income if any)
     const totalIncomesVariable = incomes.reduce(
       (sum, inc) => sum + inc.amount,

@@ -11,7 +11,6 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-import { formatCurrency } from "@/lib/utils"; // Assuming you have a utils file, or I'll define a local helper if needed. I'll use a local helper for now to be safe or just inline.
 
 const formatCurrencyLocal = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {

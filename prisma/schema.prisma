@@ -21,9 +21,11 @@ model User {
   updatedAt     DateTime  @updatedAt
   
   expenses      Expense[]
+  incomes       Income[]
   categories    Category[]
   debts         Debt[]
   budgets       Budget[]
+  goals         Goal[]
 }
 
 model Category {
@@ -31,7 +33,12 @@ model Category {
   userId    String?   // null = default category
   user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
-  emoji     String
+  emoji     String?
+  icon      String?   // New: Lucide icon name
+  color     String?   // New: Hex color
+  parentId  String?   // New: For subcategories
+  parent    Category? @relation("SubCategories", fields: [parentId], references: [id])
+  children  Category[] @relation("SubCategories")
   isDefault Boolean   @default(false)
   createdAt DateTime  @default(now())
   
@@ -39,6 +46,7 @@ model Category {
   budgets   Budget[]
   
   @@index([userId])
+  @@index([parentId])
 }
 
 model Expense {
@@ -119,6 +127,7 @@ model Budget {
   @@index([userId])
 }
 
+
 model VerificationCode {
   id        String   @id @default(cuid())
   email     String
@@ -128,4 +137,40 @@ model VerificationCode {
   
   @@index([email])
   @@index([code])
+}
+
+model Income {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description String
+  amount      Float
+  date        DateTime @default(now())
+  month       Int
+  year        Int
+  category    String?  // Optional category for income (e.g., "Salary", "Freelance")
+  isRecurring Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, month, year])
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  targetAmount Float
+  currentAmount Float  @default(0)
+  deadline    DateTime?
+  category    String?  // e.g., "Emergency", "Travel", "Investment"
+  color       String?
+  icon        String?
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }

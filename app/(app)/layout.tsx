@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
+import InstallPrompt from "@/components/InstallPrompt";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
@@ -31,6 +32,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="min-h-screen pb-24">
             <main className="px-4 py-6 safe-top">{children}</main>
             <BottomNav />
+            <InstallPrompt />
         </div>
     );
 }

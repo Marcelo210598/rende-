@@ -5,6 +5,7 @@ import AuthProvider from "@/components/AuthProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { PrivateModeProvider } from "@/contexts/PrivateModeContext";
 import { Toaster } from "sonner";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -67,6 +68,13 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Rende+" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="msapplication-TileColor" content="#10B981" />
+        <meta name="msapplication-tap-highlight" content="no" />
       </head>
       <body
         className={`${inter.variable} font-sans antialiased bg-background text-white`}
@@ -79,6 +87,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <PrivateModeProvider>
+              <ServiceWorkerRegistration />
               {children}
               <Toaster
                 position="top-center"

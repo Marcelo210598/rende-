@@ -3,13 +3,13 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Home, Receipt, CreditCard, Target, User } from "lucide-react";
+import { Home, Receipt, CreditCard, Target, PiggyBank, User } from "lucide-react";
 
 const navItems = [
     { href: "/dashboard", icon: Home, label: "Home" },
     { href: "/gastos", icon: Receipt, label: "Gastos" },
+    { href: "/metas", icon: PiggyBank, label: "Metas" },
     { href: "/dividas", icon: CreditCard, label: "Dívidas" },
-    { href: "/orcamento", icon: Target, label: "Orçamento" },
     { href: "/perfil", icon: User, label: "Perfil" },
 ];
 

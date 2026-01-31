@@ -17,6 +17,7 @@ import FloatingAddButton from "@/components/FloatingAddButton";
 import MonthSelector from "@/components/MonthSelector";
 import DonutChart from "@/components/charts/DonutChart";
 import ExpenseCard from "@/components/ExpenseCard";
+import InsightsCard from "@/components/dashboard/InsightsCard";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 
 interface MonthlyStats {
@@ -189,6 +190,15 @@ export default function DashboardPage() {
           <FinancialSummaryCards data={monthlyStats.summary} />
         </motion.div>
       )}
+
+      {/* AI Insights */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.22 }}
+      >
+        <InsightsCard monthlyStats={monthlyStats || undefined} />
+      </motion.div>
 
       {/* Evolution Chart */}
       {monthlyStats?.evolution && (

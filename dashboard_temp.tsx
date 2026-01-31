@@ -281,10 +281,3 @@ export default function DashboardPage() {
           )}
         </div>
       </motion.div>
-
-      {/* Floating Add Button */}
-      {/* Quick Add Modal */}
-  />
-    </div>
-  );
-}

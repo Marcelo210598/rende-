@@ -1,0 +1,13 @@
+      {/* Floating Add Button */}
+      <FloatingAddButton onClick={handleQuickAdd} />
+    </div>
+
+      {/* Quick Add Modal */}
+      <QuickAddModal
+        isOpen={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        onSuccess={handleQuickAddSuccess}
+      />
+    </div>
+  );
+}

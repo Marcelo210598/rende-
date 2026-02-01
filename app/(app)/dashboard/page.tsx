@@ -283,8 +283,16 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Floating Add Button */}
+      <FloatingAddButton onClick={handleQuickAdd} />
+
       {/* Quick Add Modal */}
-  />
+      {showQuickAdd && (
+        <QuickAddModal
+          isOpen={showQuickAdd}
+          onClose={() => setShowQuickAdd(false)}
+          onSuccess={handleQuickAddSuccess}
+        />
+      )}
     </div>
   );
 }

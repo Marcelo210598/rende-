@@ -135,11 +135,11 @@ export default function QuickAddModal({ isOpen, onClose, onSuccess }: QuickAddMo
         <div>
           <button
             onClick={() => setShowCategoryPicker(!showCategoryPicker)}
-            className={'w-full p-4 rounded-xl transition-all duration-200 text-left flex items-center gap-3 ${
+            className={`w-full p-4 rounded-xl transition-all duration-200 text-left flex items-center gap-3 ${
               selectedCategory
                 ? "bg-emerald-500/20 border-2 border-emerald-500"
                 : "bg-white/5 hover:bg-white/10 border border-white/10"
-            }'}
+            }`}
           >
             <span className="text-2xl">{getCategoryEmoji(selectedCategory || "Categoria")}</span>
             <span className="flex-1 font-medium text-white">
@@ -165,11 +165,11 @@ export default function QuickAddModal({ isOpen, onClose, onSuccess }: QuickAddMo
                       setSelectedCategory(cat.name);
                       setShowCategoryPicker(false);
                     }}
-                    className={'p-3 rounded-xl transition-all duration-150 text-center ${
+                    className={`p-3 rounded-xl transition-all duration-150 text-center ${
                       selectedCategory === cat.name
                         ? "bg-emerald-500 ring-2 ring-emerald-500 scale-105"
                         : "bg-white/5 hover:bg-white/10"
-                    }'}
+                    }`}
                   >
                     <span className="text-2xl block mb-1">{cat.emoji}</span>
                     <span className="text-xs text-white/70">{cat.name}</span>

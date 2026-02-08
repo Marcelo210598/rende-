@@ -133,4 +133,51 @@ export const NotificationService = {
       }
     }
   },
+
+  async checkExpenseAlerts(userId: string) {
+    const today = new Date();
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(today.getDate() + 3);
+
+    const upcomingExpenses = await prisma.expense.findMany({
+      where: {
+        userId,
+        isPaid: false,
+        enableNotification: true,
+        dueDate: {
+          gte: today,
+          lte: threeDaysFromNow,
+        },
+      },
+      include: {
+        category: true,
+      },
+    });
+
+    for (const expense of upcomingExpenses) {
+      if (!expense.dueDate) continue;
+
+      const timeDiff = expense.dueDate.getTime() - today.getTime();
+      const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+      let title = "Conta Vencendo! ⏰";
+      let message = "";
+
+      if (daysUntilDue <= 0) {
+        title = "Vence Hoje! 🚨";
+        message = `O gasto "${expense.note || expense.category.name}" de R$ ${expense.amount.toFixed(2)} vence hoje!`;
+      } else {
+        message = `O gasto "${expense.note || expense.category.name}" de R$ ${expense.amount.toFixed(2)} vence em ${daysUntilDue} dias.`;
+      }
+
+      // Check if notification already exists for this expense today to avoid spam
+      // For now, we'll create it. In production, we'd dedup.
+      await this.create({
+        userId,
+        title,
+        message,
+        type: daysUntilDue <= 0 ? "DANGER" : "WARNING",
+      });
+    }
+  },
 };

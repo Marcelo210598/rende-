@@ -15,10 +15,12 @@ export async function GET() {
   if (!user)
     return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  // Trigger checks (in a real app, this would be a background job)
-  await NotificationService.checkBillReminders(user.id);
-  await NotificationService.checkBudgetAlerts(user.id);
-
+  // Trigger checks (in background or explicitly)
+  await Promise.all([
+    NotificationService.checkBillReminders(session.user.id),
+    NotificationService.checkBudgetAlerts(session.user.id),
+    NotificationService.checkExpenseAlerts(session.user.id),
+  ]);
   const notifications = await NotificationService.getUnread(user.id);
   return NextResponse.json(notifications);
 }

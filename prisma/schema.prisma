@@ -63,6 +63,8 @@ model Expense {
   year        Int       @default(2024) // 2024, 2025, etc
   isPaid      Boolean   @default(false) // Se a despesa já foi paga
   paidAt      DateTime? // Quando foi paga
+  dueDate     DateTime? // Data de vencimento (para alertas)
+  enableNotification Boolean @default(false) // Se deve notificar no vencimento
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   

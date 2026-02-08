@@ -16,6 +16,7 @@ model User {
   image         String?
   monthlyIncome Float     @default(0)
   discreteMode  Boolean   @default(false)
+  mobileToken   String?   @unique // Token for Android App Sync
   emailVerified DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -65,6 +66,11 @@ model Expense {
   paidAt      DateTime? // Quando foi paga
   dueDate     DateTime? // Data de vencimento (para alertas)
   enableNotification Boolean @default(false) // Se deve notificar no vencimento
+  
+  // Sync Fields
+  source      String    @default("MANUAL") // MANUAL, ANDROID_SYNC
+  externalId  String?   @unique // Hash to prevent duplicates (e.g. notification ID)
+  
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   
@@ -77,6 +83,7 @@ model Expense {
   @@index([date])
   @@index([userId, month, year])
   @@index([userId, isPaid])
+  @@index([externalId])
 }
 
 model Debt {

@@ -17,9 +17,9 @@ export async function GET() {
 
   // Trigger checks (in background or explicitly)
   await Promise.all([
-    NotificationService.checkBillReminders(session.user.id),
-    NotificationService.checkBudgetAlerts(session.user.id),
-    NotificationService.checkExpenseAlerts(session.user.id),
+    NotificationService.checkBillReminders(user.id),
+    NotificationService.checkBudgetAlerts(user.id),
+    NotificationService.checkExpenseAlerts(user.id),
   ]);
   const notifications = await NotificationService.getUnread(user.id);
   return NextResponse.json(notifications);

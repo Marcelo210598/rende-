@@ -26,6 +26,7 @@ model User {
   debts         Debt[]
   budgets       Budget[]
   goals         Goal[]
+  notifications Notification[]
 }
 
 model Category {
@@ -173,4 +174,18 @@ model Goal {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, WARNING, SUCCESS, DANGER
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, isRead])
 }

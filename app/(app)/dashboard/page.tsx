@@ -19,6 +19,7 @@ import DonutChart from "@/components/charts/DonutChart";
 import ExpenseCard from "@/components/ExpenseCard";
 import InsightsCard from "@/components/dashboard/InsightsCard";
 import QuickAddModal from "@/components/QuickAddModal";
+import NotificationCenter from "@/components/NotificationCenter";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 
 interface MonthlyStats {
@@ -167,6 +168,7 @@ export default function DashboardPage() {
           <p className="text-muted-foreground text-sm">Dashboard Financeiro</p>
         </div>
         <div className="flex gap-2">
+          <NotificationCenter />
           <ThemeToggle />
           <button
             onClick={handleRefresh}
